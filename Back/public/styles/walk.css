@@ -1,0 +1,202 @@
+*, :after, :before {
+    box-sizing: border-box;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes loop {
+    0% {
+        stroke-dasharray: 1.25, 250;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 111.25, 250;
+        stroke-dashoffset: -43.75;
+    }
+
+    100% {
+        stroke-dasharray: 111.25, 250;
+        stroke-dashoffset: -155;
+    }
+}
+
+html {
+    height: 100%;
+    font-size: 1em;
+    font-family: 'Lato', sans-serif;
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 100%;
+    min-width: 320px;
+    min-height: 100%;
+    background: #F5F5F5
+}
+
+div#page {
+    display: block;
+}
+
+div#page div.main {
+    transition: all 0.20s ease;
+    visibility: hidden;
+    display: none;
+}
+
+div#page div.load {
+    position: absolute;
+    overflow: hidden;
+    display: block;
+    margin: auto;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    width: 100%;
+    bottom: 0px;
+    height: 150px;
+}
+
+div#page div.load svg {
+    position: relative;
+    animation: 2s linear 0s infinite normal none running spin;
+    display: block;
+    margin: 0px auto;
+    left: 0px;
+    right: 0px;
+    width: 60px;
+    height: 60px;
+}
+
+div#page div.load svg [ring] {
+    transition: stroke-dasharray 350ms cubic-bezier(0.4, 0, 0.2, 1) 0s;
+    animation: 1.5s ease-in-out 0s infinite normal none running loop;
+    stroke-miterlimit: 20;
+    stroke-dashoffset: 0;
+    stroke-dasharray: calc(1.25), calc(250);
+    stroke-linecap: round;
+    stroke-width: 4;
+    stroke: #231F21;
+    fill: none;
+}
+
+div#page div.load div {
+    overflow: hidden;
+    display: block;
+    padding: 20px 0px;
+}
+
+div#page div.load b {
+    overflow: hidden;
+    display: block;
+    line-height: 24px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: #7B8B9E;
+}
+
+div#page div.load p {
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 0px;
+    line-height: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #5F6358
+}
+
+div#page div.load[done] {
+    visibility: hidden;
+    display: none;
+}
+
+div#page div.load[done] + div.main {
+    visibility: visible;
+    display: block;
+}
+
+ul#cart {
+    display: flex;
+    list-style-type: none;
+    counter-reset: steps;
+    padding-top: 50px;
+    margin-bottom: 30px;
+    justify-content: space-between;
+}
+  
+ul#cart li {
+    font-size: 13px;
+    text-align: center;
+    position: relative;
+    flex-grow: 1;
+    flex-basis: 0;
+    color: rgba(0, 0, 0, 0.5);
+    font-weight: 600;
+}
+
+ul#cart li.done,
+ul#cart li.next {
+    color: #000000;
+}
+
+ul#cart li::after {
+    counter-increment: steps;
+    content: counter(steps, decimal);
+    display: block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    background: #FFFFFF;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    z-index: 2;
+    margin-left: -15px;
+    margin-top: -60px;
+}
+
+ul#cart li.next::after,
+ul#cart li.done::after {
+    background: #000000;
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #FFFFFF;
+}
+
+ul#cart li::before {
+    position: absolute;
+    content: '';
+    top: -26px;
+    left: -50%;
+    width: 100%;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+ul#cart li.next::before,
+ul#cart li.done::before,
+ul#cart li.next + li::before {
+    background: #000000;
+}
+
+ul#cart li:first-child::before {
+    display: none;
+}
+
+.bind label:after {
+    margin: 0px 4px;
+    content: '*';
+    color: #B71C1C;
+    font-size: 14px;
+}

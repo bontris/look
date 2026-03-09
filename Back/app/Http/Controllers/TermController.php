@@ -16,13 +16,11 @@ use Illuminate\Support\Facades\Log;
 
 use App\Http\Controllers\Controller;
 
-use Intervention\Image\ImageManager;
-
-use Intervention\Image\Drivers\Gd\Driver;
-
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+
+use Intervention\Image\ImageManagerStatic as Image;
 
 class TermController extends Controller
 {
@@ -222,17 +220,13 @@ class TermController extends Controller
                 switch (strtolower($task)) {
                     case 'bulk':
                         $validator = Validator::make($request->all(), [
-                            'name' => 'required|string|max:64',
                             'post' => 'required|integer|min:1',
                             'date' => 'required|date_format:Y-m-d',
-                            'file' => 'required|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.spreadsheetml.sheetapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:6144'
+                            'file' => 'required|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.spreadsheetml.sheetapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:16384'
                         ], [
                             'post.min' => __('El campo no es válido.'),
-                            'name.max' => __('El campo no es válido.'),
-                            'file.max' => __('El archivo no puede pesar más de 6 Mb.'),
-                            'name.string' => __('El campo no es válido.'),
+                            'file.max' => __('El archivo no puede pesar más de 16 Mb.'),
                             'post.integer' => __('El campo no es válido.'),
-                            'name.required' => __('El campo es requerido.'),
                             'post.required' => __('El campo es requerido.'),
                             'file.required' => __('El campo es requerido.'),
                             'date.required' => __('El campo es requerido.'),
@@ -243,7 +237,7 @@ class TermController extends Controller
                         if (empty($validator->fails())) {
                             if (empty(DB::table('loads')
                                         ->where('hide', 0)
-                                        ->where('name', trim($request->get('name')))
+                                        ->where('name', trim($request->get('post')))
                                         ->first())) {
                                 if (empty(DB::table('loads')
                                             ->where('hide', 0)
@@ -254,7 +248,7 @@ class TermController extends Controller
                                                 ->where('date', trim($request->get('date')))
                                                 ->first())) {
                                         $sheet = (new Xlsx())->load($request->file('file'))
-                                                                ->getActiveSheet();
+                                                             ->getActiveSheet();
                                 
                                         $disk = array_reduce((array)$sheet->getDrawingCollection(), function ($hash, $item) {
                                             $hash[$item->getCoordinates()] = $item;
@@ -308,7 +302,16 @@ class TermController extends Controller
                                                 'slot' => 10,
                                                 'bind' => true,
                                                 'list' => [
-                                                    'publicada' => 1
+                                                    'negada' => 1,
+                                                    'publicada' => 2,
+                                                    'cancelada' => 5,
+                                                    'registrada' => 3,
+                                                    'renuncia total' => 6,
+                                                    'bajo examen de fondo' => 4,
+                                                    'concepto de viabilidad' => 7,
+                                                    'bajo examen de forma' => 8,
+                                                    'con oposición' => 9,
+                                                    'concedida' => 10
                                                 ]
                                             ],
                                             'solicitante' => [
@@ -340,149 +343,178 @@ class TermController extends Controller
                                         
                                         $done = [];
 
-                                        if (($load = DB::table('loads')->insertGetId([
-                                            'code' => hexdec(uniqid()),
-                                            'made' => date('Y-m-d H:i:s'),
-                                            'hash' => md5(uniqid(rand(), true)),
-                                            'date' => trim($request->get('date')),
-                                            'name' => trim($request->get('name')),
-                                            'post' => intval($request->get('post'))
-                                        ]))) {
+                                        try {
+                                            DB::beginTransaction();
 
-                                            while (isset($data[$next])) {
-                                                if ($push) {
-                                                    foreach ($head as $item) {
-                                                        if ((isset($item['file']) && boolval($item['file']))) {
-                                                            if (isset($disk[($cell = sprintf('%s%d', chr(($item['slot'] + 65)), ($next + 1)))])) {
-                                                                $link = fopen($disk[$cell]->getPath(), 'r');
-        
-                                                                $file = [];
-        
-                                                                while ((feof($link) == false)) {
-                                                                    array_push($file, fread($link, 1024));
-                                                                }
-        
-                                                                fclose($link);
-        
-                                                                $line[$item['slot']] = [
-                                                                    'file' => base64_encode(implode($file)),
-                                                                    'type' => $disk[$cell]->getExtension(),
-                                                                    'name' => $disk[$cell]->getName()
-                                                                ];
-                                                            } else {
-                                                                $skip = $item['bind'];
-        
-                                                                break;
-                                                            }
-                                                        } else {
-                                                            if (empty((empty(($line[$item['slot']] = ['text' => trim($data[$next][$item['slot']])])['text']) ? boolval($item['bind']) : (isset($item['rule']) && preg_match($item['rule'], $line[$item['slot']]['text'], $line[$item['slot']]['data']))))) {
-                                                                $skip = true;
+                                            set_time_limit(900);
+
+                                            if (($load = DB::table('loads')->insertGetId([
+                                                'code' => hexdec(uniqid()),
+                                                'made' => date('Y-m-d H:i:s'),
+                                                'hash' => md5(uniqid(rand(), true)),
+                                                'date' => trim($request->get('date')),
+                                                'name' => trim($request->get('post')),
+                                                'post' => intval($request->get('post'))
+                                            ]))) {
+                                                while (isset($data[$next])) {
+                                                    if ($push) {
+                                                        try {
+                                                            foreach ($head as $item) {
+                                                                if ((isset($item['file']) && boolval($item['file']))) {
+                                                                    if (isset($disk[($cell = sprintf('%s%d', chr(($item['slot'] + 65)), ($next + 1)))])) {
+                                                                        $link = fopen($disk[$cell]->getPath(), 'r');
                 
-                                                                break;
-                                                            } else {
-                                                                if (empty((empty(isset($item['link'])) || empty($item['link']) || (($line[$item['slot']]['link'] = trim($sheet->getHyperlink(sprintf('%s%d', chr(($item['slot'] + 65)), ($next + 1)))->getUrl())) || empty($item['bind']))))) {
-                                                                    $skip = true;
+                                                                        $file = [];
                 
-                                                                    break;
+                                                                        while ((feof($link) == false)) {
+                                                                            array_push($file, fread($link, 1024));
+                                                                        }
+                
+                                                                        fclose($link);
+                
+                                                                        $line[$item['slot']] = [
+                                                                            'file' => base64_encode(implode($file)),
+                                                                            'type' => $disk[$cell]->getExtension(),
+                                                                            'name' => $disk[$cell]->getName()
+                                                                        ];
+                                                                    } else {
+                                                                        $skip = $item['bind'];
+                                                                        
+                                                                        break;
+                                                                    }
                                                                 } else {
-                                                                    if (isset($item['list'])) {
-                                                                        if (isset($item['list'][($line[$item['slot']]['text'] = strtolower($line[$item['slot']]['text']))])) {
-                                                                            $line[$item['slot']]['item'] = $item['list'][$line[$item['slot']]['text']];
-                                                                        } else {
+                                                                    if ((empty(($line[$item['slot']] = ['text' => trim($data[$next][$item['slot']])])['text']) ? boolval($item['bind']) : (isset($item['rule']) && empty(preg_match($item['rule'], $line[$item['slot']]['text'], $line[$item['slot']]['data']))))) {
+                                                                        $skip = true;
+        
+                                                                        break;
+                                                                    } else {
+                                                                        if (empty((empty(isset($item['link'])) || empty($item['link']) || (($line[$item['slot']]['link'] = trim($sheet->getHyperlink(sprintf('%s%d', chr(($item['slot'] + 65)), ($next + 1)))->getUrl())) || empty($item['bind']))))) {
                                                                             $skip = true;
-                
+        
                                                                             break;
+                                                                        } else {
+                                                                            if (isset($item['list'])) {
+                                                                                if (isset($item['list'][($line[$item['slot']]['text'] = strtolower($line[$item['slot']]['text']))])) {
+                                                                                    $line[$item['slot']]['item'] = $item['list'][$line[$item['slot']]['text']];
+                                                                                } else {
+                                                                                    $skip = true;
+                        
+                                                                                    break;
+                                                                                }
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
                                                             }
-                                                        }
-                                                    }
-        
-                                                    if (empty($skip)) {
-                                                        if (empty(DB::table('terms')
-                                                                    ->where('hide', 0)
-                                                                    ->where('card', $line[$head['expediente no.']['slot']]['text'])
-                                                                    ->first())) {
-                                                            if ((empty(isset($line[$head['etiqueta']['slot']]['file'])) || (new ImageManager(Driver::class))->read($line[$head['etiqueta']['slot']]['file'])->save(sprintf('%s/%s', public_path('images'), ($icon = md5(uniqid(rand(), true))))))) {
-                                                                if (($item = DB::table('terms')->insertGetId([
-                                                                    'icon' => $icon,
-                                                                    'load' => $load,
-                                                                    'made' => date('Y-m-d H:i:s'),
-                                                                    'code' => ($code = hexdec(uniqid())),
-                                                                    'hash' => ($hash = md5(uniqid(rand(), true))),
-                                                                    'rank' => $line[$head['estado']['slot']]['item'],
-                                                                    'head' => $line[$head['apoderado']['slot']]['text'],
-                                                                    'lead' => $line[$head['solicitante']['slot']]['text'],
-                                                                    'card' => $line[$head['expediente no.']['slot']]['text'],
-                                                                    'type' => $line[$head['naturaleza del signo']['slot']]['item'],
-                                                                    'text' => $line[$head['denominación del signo']['slot']]['text'],
-                                                                    'tone' => ($tone = ['548BF2', '7DBE71', 'B68148', 'EBB410', 'E66D5F', '9976DE'][rand(0, 5)]),
-                                                                    'link' => isset($line[$head['expediente no.']['slot']]['link']) ? $line[$head['expediente no.']['slot']]['link'] : null,
-                                                                    'sort' => json_encode(array_reduce(explode(',', $line[$head['naturaleza del signo']['slot']]['text']), function ($list, $item) {
-                                                                        array_push($list, intval(trim($item)));
-            
-                                                                        return $list;
-                                                                    }, [])),
-                                                                    'date' => ($date = sprintf('%04d-%02d-%02d', $line[$head['fecha de presentación']['slot']]['data']['from'], $list[mb_strtolower($line[$head['fecha de presentación']['slot']]['data']['name'])], $line[$head['fecha de presentación']['slot']]['data']['date']))
-                                                                ]))) {
-                                                                    array_push($done, ['file'=>$line[$head['etiqueta']['slot']]['file'],
-                                                                        'item' => $item,
-                                                                        'code' => $code,
-                                                                        'hash' => $hash,
-                                                                        'tone' => $tone,
-                                                                        'icon' => $icon,
-                                                                        'rank' => $line[$head['estado']['slot']]['item'],
-                                                                        'type' => $line[$head['naturaleza del signo']['slot']]['item']
-                                                                    ]);
-                                                                } else {
-                                                                    return response()->json([
-                                                                        'text' => 'El registro no pudo ser guardado.'
-                                                                    ], 500);
+                
+                                                            if (empty($skip)) {
+                                                                if (empty(DB::table('terms')
+                                                                            ->where('hide', 0)
+                                                                            ->where('card', $line[$head['expediente no.']['slot']]['text'])
+                                                                            ->first())) {
+                                                                    if ((empty(isset($line[$head['etiqueta']['slot']]['file'])) || Image::make($line[$head['etiqueta']['slot']]['file'])->save(sprintf('%s/%s', storage_path('files'), ($icon = md5(uniqid(rand(), true))))))) {
+                                                                        if (($item = DB::table('terms')->insertGetId([
+                                                                            'icon' => $icon,
+                                                                            'load' => $load,
+                                                                            'made' => date('Y-m-d H:i:s'),
+                                                                            'code' => ($code = hexdec(uniqid())),
+                                                                            'hash' => ($hash = md5(uniqid(rand(), true))),
+                                                                            'rank' => $line[$head['estado']['slot']]['item'],
+                                                                            'head' => $line[$head['apoderado']['slot']]['text'],
+                                                                            'lead' => $line[$head['solicitante']['slot']]['text'],
+                                                                            'card' => $line[$head['expediente no.']['slot']]['text'],
+                                                                            'type' => $line[$head['naturaleza del signo']['slot']]['item'],
+                                                                            'text' => $line[$head['denominación del signo']['slot']]['text'],
+                                                                            'tone' => ($tone = ['548BF2', '7DBE71', 'B68148', 'EBB410', 'E66D5F', '9976DE'][rand(0, 5)]),
+                                                                            'link' => isset($line[$head['expediente no.']['slot']]['link']) ? $line[$head['expediente no.']['slot']]['link'] : null,
+                                                                            'sort' => json_encode(array_reduce(explode(',', $line[$head['clases']['slot']]['text']), function ($list, $item) {
+                                                                                array_push($list, intval(trim($item)));
+                    
+                                                                                return $list;
+                                                                            }, [])),
+                                                                            'date' => ($date = sprintf('%04d-%02d-%02d', $line[$head['fecha de presentación']['slot']]['data']['from'], $list[mb_strtolower($line[$head['fecha de presentación']['slot']]['data']['name'])], $line[$head['fecha de presentación']['slot']]['data']['date']))
+                                                                        ]))) {
+                                                                            array_push($done, ['file'=>$line[$head['etiqueta']['slot']]['file'],
+                                                                                'item' => $item,
+                                                                                'code' => $code,
+                                                                                'hash' => $hash,
+                                                                                'tone' => $tone,
+                                                                                'icon' => $icon,
+                                                                                'rank' => $line[$head['estado']['slot']]['item'],
+                                                                                'type' => $line[$head['naturaleza del signo']['slot']]['item']
+                                                                            ]);
+                                                                        } else {
+                                                                            return response()->json([
+                                                                                'text' => 'El registro no pudo ser guardado.'
+                                                                            ], 500);
+                                                                        }
+                                                                    }
                                                                 }
+                                                            } else {
+                                                                $skip = false;
                                                             }
+                                                        } catch (\Exception $exception) {
+                                                            Log::error($exception->getMessage());
                                                         }
                                                     } else {
+                                                        $line = array_map(function ($name) {
+                                                            return mb_strtolower(trim($name));
+                                                        }, $data[$next]);
+            
                                                         $skip = false;
-                                                    }
-                                                } else {
-                                                    $line = array_map(function ($name) {
-                                                        return mb_strtolower(trim($name));
-                                                    }, $data[$next]);
-        
-                                                    $skip = false;
-        
-                                                    foreach ($head as $name => $item) {
-                                                        if (is_numeric(($slot = array_search($name, $line)))) {
-                                                            $item['slot'] = $slot;
-        
-                                                            $head[$name] = $item;
-                                                        } else {
-                                                            $skip = true;
-        
-                                                            break;
+            
+                                                        foreach ($head as $name => $item) {
+                                                            if (is_numeric(($slot = array_search($name, $line)))) {
+                                                                $item['slot'] = $slot;
+            
+                                                                $head[$name] = $item;
+                                                            } else {
+                                                                $skip = true;
+            
+                                                                break;
+                                                            }
+                                                        }
+            
+                                                        if (empty($skip)) {
+                                                            $push = true;
                                                         }
                                                     }
-        
-                                                    if (empty($skip)) {
-                                                        $push = true;
-                                                    }
+                    
+                                                    $next++;
                                                 }
-                
-                                                $next++;
-                                            }
-        
-                                            if ($push) {
-                                                return response()->json([
-                                                    'text' => 'El registro fue guardado con éxito.',
-                                                    'done' => $done
-                                                ], 200);
+            
+                                                if ($push) {
+                                                    if (count($done)) {
+                                                        DB::commit();
+
+                                                        return response()->json([
+                                                            'text' => 'Los registros fueron importados con éxito.',
+                                                            'done' => $done
+                                                        ], 200);
+                                                    } else {
+                                                        DB::rollBack();
+
+                                                        return response()->json([
+                                                            'text' => 'No se importó ningún registro.'
+                                                        ], 400);
+                                                    }
+                                                } else {
+                                                    DB::rollBack();
+
+                                                    return response()->json([
+                                                        'text' => 'El formato no es válido.'
+                                                    ], 400);
+                                                }
                                             } else {
                                                 return response()->json([
-                                                    'text' => 'El formato no es válido.'
-                                                ], 400);
+                                                    'text' => 'La gaceta no pudo ser guardada correctamente.'
+                                                ], 500);
                                             }
-                                        } else {
+                                        } catch (\Exception $exception) {
+                                            DB::rollBack();
+        
+                                            Log::error(sprintf('Unexpected exception: %s', $exception->getMessage()));
+        
                                             return response()->json([
                                                 'text' => 'La gaceta no pudo ser guardada correctamente.'
                                             ], 500);
@@ -698,8 +730,8 @@ class TermController extends Controller
 
                         return response()->json(['size' => ($size = $query->count()),
                                                 'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                                'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                                'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                                'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                                'data' => array_reduce($query->skip(($page * $take))
                                                                             ->take(($take ? $take : $size))
                                                                             ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                             ->orderBy('made', 'desc')
@@ -802,7 +834,7 @@ class TermController extends Controller
         } catch (\Exception $exception) {
             Log::error($exception->getMessage());
 
-            return response()->json(['text' => 'Se presentó un error no esperado.', 'fail' => $exception->getMessage()], 500);
+            return response()->json(['text' => 'Se presentó un error no esperado.'], 500);
         }
     }
 }

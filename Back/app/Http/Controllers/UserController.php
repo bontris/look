@@ -392,11 +392,11 @@ class UserController extends Controller
                         }
                     }
 
-                    return response()->json(['high' => ($high = $query->count()),
+                    return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($high / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
-                                                                          ->take(($take ? $take : $high))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
+                                                                          ->take(($take ? $take : $size))
                                                                           ->orderBy('code', ($take ? 'desc' : 'asc'))
                                                                           ->get()
                                                                           ->toArray(), function ($list, $item) {
@@ -567,6 +567,31 @@ class UserController extends Controller
         }
     }
 
+    public function bell (Request $request) {
+        if (Auth::check()) {
+            return response()->json(array_reduce(DB::table('rings')
+                                                  ->where('hide', 0)
+                                                  ->where('seen', 0)
+                                                  ->take(10)
+                                                  ->orderBy('made', 'desc')
+                                                  ->get()
+                                                  ->toArray(), function ($list, $item) {
+                array_push($list, [
+                    'type' => intval($item->type),
+                    'item' => intval($item->row),
+                    'hash' => $item->hash,
+                    'name' => $item->name,
+                    'note' => $item->note,
+                    'link' => $item->link
+                ]);
+
+                return $list;
+            }, []), 200);
+        } else {
+           return response()->json(['text' => 'Forbidden.'], 403);
+        }
+    }
+
     public function ping (Request $request) {
         if (($hook = $request->get('hook'))) {
             if (($hook = DB::table('hooks')
@@ -599,166 +624,199 @@ class UserController extends Controller
             }
         } else {
             if (Auth::check()) {
-                if (($user = User::where('id', Auth::user()->id)
-                                 ->where('hide', 0)
-                                 ->first())) {
-                    $client = new Client();
+                $user = Auth::user();
 
-                    $head = [];
-        
-                    $link = [];
-        
-                    $disk = [];
-        
-                    $next = 0;
-        
-                    $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/i668hxjt9d3qn08b/user.search.json', [
-                        RequestOptions::QUERY => [
-                            'order' => ['NAME' => 'asc', 'LAST_NAME' => 'asc'],
-                            'fields' => ['ID', 'NAME', 'EMAIL', 'USER_TYPE', 'IS_ONLINE', 'LAST_NAME', 'PERSONAL_CITY', 'PERSONAL_PHOTO', 'USER_TYPE' => 'employee']
-                        ]
-                    ]);
-        
-                    if (($response->getStatusCode() == 200)) {
-                        if (($data = json_decode($response->getBody(), true))) {
-                            $head = array_reduce($data['result'], function ($list, $item) {
-                                if (trim($item['NAME'])) {
-                                    array_push($list, [
-                                        'item' => $item['ID'],
-                                        'name' => $item['NAME'],
-                                        'mail' => $item['EMAIL'],
-                                        'last' => $item['LAST_NAME'],
-                                        'spot' => $item['PERSONAL_CITY'] ?? null,
-                                        'icon' => $item['PERSONAL_PHOTO'] ?? null,
-                                        'live' => empty(strcmp($item['IS_ONLINE'], 'Y'))
-                                    ]);
-                                }
-                                
-                                return $list;
-                            }, []);
-                        }
-                    }
-        
-                    do {
-                        $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/3v18fnz4ugfcfxho/crm.company.list.json', [
-                            RequestOptions::QUERY => [
-                                'order' => ['TITLE' => 'asc'],
-                                'start' => $next,
-                                'limit' => 50
-                            ]
-                        ]);
-            
-                        if (($done = ($response->getStatusCode() == 200))) {
-                            if (($data = json_decode($response->getBody(), true))) {
-                                $link = array_merge($link, array_reduce($data['result'], function ($list, $item) {
-                                    array_push($list, [
-                                        'item' => $item['ID'],
-                                        'name' => $item['TITLE']
-                                    ]);
-            
-                                    return $list;
-                                }, []));
-                            }
-                        }
-                    } while (($done && isset($data['next']) && ($next = intval($data['next']))));
-        
-                    $client = new \Google\Client();
-        
-                    $client->setClientId(env('API_GOOGLE_CLIENT'));
-        
-                    $client->setClientSecret(env('API_GOOGLE_SECRET'));
-        
-                    $client->refreshToken(env('API_GOOGLE_TOKEN'));
-        
-                    $client->addScope(\Google\Service\Drive::DRIVE_FILE);
-        
-                    $drive = new \Google\Service\Drive($client);
-        
-                    $data = $drive->files->listFiles(['q' => sprintf('\'%s\' in parents and trashed = false and mimeType = \'application/vnd.google-apps.folder\'', env('API_GOOGLE_FOLDER'))]);
-        
-                    if (isset($data)) {
-                        $disk = array_reduce($data->files, function ($list, $item) {
-                            array_push($list, [
-                                'item' => $item->id,
-                                'name' => $item->name
-                            ]);
-        
-                            return $list;
-                        }, []);
-                    }
-
-                    return response()->json([
-                        'hash' => $user->hash,
-                        'code' => $user->code,
-                        'nick' => $user->nick,
-                        'mail' => $user->mail,
-                        'cell' => $user->cell,
-                        'last' => $user->last,
-                        'name' => $user->name,
-                        'fill' => $user->fill,
-                        'face' => $user->face,
-                        'type' => $user->type,
-                        'item' => strval($user->id),
-                        'firm' => [
-                            'rate' => floatval($user->firm->rate),
-                            'cost' => floatval($user->firm->cost),
-                            'core' => boolval($user->firm->core),
-                            'plan' => intval($user->firm->plan),
-                            'hash' => $user->firm->hash,
-                            'icon' => $user->firm->icon,
-                            'name' => $user->firm->name
-                        ],
-                        'heap' => [
-                            'head' => $head,
-                            'link' => $link,
-                            'disk' => $disk,
-                            'hand' => array_reduce(DB::table('hands')
-                                                     ->where('hide', 0)
-                                                     ->orderBy('name', 'asc')
-                                                     ->get()
-                                                     ->toArray(), function ($list, $item) {
-                                array_push($list, [
-                                    'type' => intval($item->type),
-                                    'link' => intval($item->link),
-                                    'item' => intval($item->row),
-                                    'hash' => $item->hash,
-                                    'code' => $item->code,
-                                    'card' => $item->card,
-                                    'last' => $item->last,
-                                    'name' => $item->name,
-                                    'icon' => $item->icon,
-                                    'tone' => $item->tone
-                                ]);
-
-                                return $list;
-                            }, []),
-                            'firm' => array_reduce(DB::table('firms')
-                                                     ->where('hide', 0)
-                                                     ->orderBy('name', 'asc')
-                                                     ->get()
-                                                     ->toArray(), function ($list, $item) {
-                                array_push($list, [
-                                    'lock' => intval($item->lock),
-                                    'type' => intval($item->type),
-                                    'item' => intval($item->row),
-                                    'hash' => $item->hash,
-                                    'code' => $item->code,
-                                    'card' => $item->card,
-                                    'name' => $item->name,
-                                    'icon' => $item->icon,
-                                    'tone' => $item->tone
-                                ]);
-
-                                return $list;
-                            }, [])
-                        ]
-                    ], 200);
-                } else {
-                    return response()->json(['text' => 'User not found.'], 404);
-                }
+                return response()->json([
+                    'hash' => $user->hash,
+                    'code' => $user->code,
+                    'nick' => $user->nick,
+                    'mail' => $user->mail,
+                    'cell' => $user->cell,
+                    'last' => $user->last,
+                    'name' => $user->name,
+                    'fill' => $user->fill,
+                    'face' => $user->face,
+                    'type' => $user->type,
+                    'link' => $user->link,
+                    'item' => $user->id,
+                    'firm' => [
+                        'load' => intval(DB::table('times')->join('tasks', function ($join) use ($user) {
+                            $join->on('times.bind', 'tasks.row')
+                                 ->where('tasks.bind', $user->firm->link);
+						})->where(DB::raw('DATE_FORMAT(times.made, "%Y-%m")'), date('Y-m'))->sum('times.load')),
+                        'rate' => floatval($user->firm->rate),
+                        'cost' => floatval($user->firm->cost),
+                        'core' => boolval($user->firm->core),
+                        'plan' => intval($user->firm->plan),
+                        'time' => intval($user->firm->time),
+                        'bank' => intval($user->firm->bank),
+                        'lead' => intval($user->firm->lead),
+                        'item' => intval($user->firm->row),
+                        'hash' => $user->firm->hash,
+                        'icon' => $user->firm->icon,
+                        'name' => $user->firm->name
+                    ]
+                ], 200);
             } else {
                 return response()->json(['text' => 'Forbidden.'], 403);
             }
+        }
+    }
+
+    public function data (Request $request) {
+        if (Auth::check()) {
+            $client = new Client();
+
+            $head = [];
+
+            $link = [];
+
+            $disk = [];
+
+            $next = 0;
+
+            $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/i668hxjt9d3qn08b/user.search.json', [
+                RequestOptions::QUERY => [
+                    'order' => ['NAME' => 'asc', 'LAST_NAME' => 'asc'],
+                    'fields' => ['ID', 'NAME', 'EMAIL', 'USER_TYPE', 'IS_ONLINE', 'LAST_NAME', 'PERSONAL_MOBILE', 'PERSONAL_CITY', 'PERSONAL_PHOTO', 'USER_TYPE' => 'employee']
+                ]
+            ]);
+
+            if (($response->getStatusCode() == 200)) {
+                if (($data = json_decode($response->getBody(), true))) {
+                    $head = array_reduce($data['result'], function ($list, $item) {
+                        if (trim($item['NAME'])) {
+                            array_push($list, [
+                                'item' => $item['ID'],
+                                'name' => $item['NAME'],
+                                'mail' => $item['EMAIL'],
+                                'last' => $item['LAST_NAME'],
+                                'work' => $item['PERSONAL_MOBILE'] ?? null,
+                                'spot' => $item['PERSONAL_CITY'] ?? null,
+                                'icon' => $item['PERSONAL_PHOTO'] ?? null,
+                                'live' => empty(strcmp($item['IS_ONLINE'], 'Y'))
+                            ]);
+                        }
+                        
+                        return $list;
+                    }, []);
+                }
+            }
+
+            do {
+                $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/3v18fnz4ugfcfxho/crm.company.list.json', [
+                    RequestOptions::QUERY => [
+                        'order' => ['TITLE' => 'asc'],
+                        'start' => $next,
+                        'limit' => 50
+                    ]
+                ]);
+    
+                if (($done = ($response->getStatusCode() == 200))) {
+                    if (($data = json_decode($response->getBody(), true))) {
+                        $link = array_merge($link, array_reduce($data['result'], function ($list, $item) {
+                            array_push($list, [
+                                'item' => $item['ID'],
+                                'name' => $item['TITLE']
+                            ]);
+    
+                            return $list;
+                        }, []));
+                    }
+                }
+            } while (($done && isset($data['next']) && ($next = intval($data['next']))));
+
+            $client = new \Google\Client();
+
+            $client->setClientId(env('API_GOOGLE_CLIENT'));
+
+            $client->setClientSecret(env('API_GOOGLE_SECRET'));
+
+            $client->refreshToken(env('API_GOOGLE_TOKEN'));
+
+            $client->addScope(\Google\Service\Drive::DRIVE_FILE);
+
+            $drive = new \Google\Service\Drive($client);
+
+            $data = $drive->files->listFiles(['q' => sprintf('\'%s\' in parents and trashed = false and mimeType = \'application/vnd.google-apps.folder\'', env('API_GOOGLE_FOLDER'))]);
+
+            if (isset($data)) {
+                $disk = array_reduce($data->files, function ($list, $item) {
+                    array_push($list, [
+                        'item' => $item->id,
+                        'name' => $item->name
+                    ]);
+
+                    return $list;
+                }, []);
+            }
+
+            return response()->json([
+                'head' => $head,
+                'link' => $link,
+                'disk' => $disk,
+                'hand' => array_reduce(DB::table('hands')
+                                         ->where('hide', 0)
+                                         ->orderBy('name', 'asc')
+                                         ->get()
+                                         ->toArray(), function ($list, $item) {
+                    array_push($list, [
+                        'type' => intval($item->type),
+                        'link' => intval($item->link),
+                        'item' => intval($item->row),
+                        'hash' => $item->hash,
+                        'code' => $item->code,
+                        'card' => $item->card,
+                        'last' => $item->last,
+                        'name' => $item->name,
+                        'icon' => $item->icon,
+                        'tone' => $item->tone
+                    ]);
+
+                    return $list;
+                }, []),
+                'firm' => array_reduce(DB::table('firms')
+                                            ->where('hide', 0)
+                                            ->orderBy('name', 'asc')
+                                            ->get()
+                                            ->toArray(), function ($list, $item) {
+                    array_push($list, [
+                        'lock' => intval($item->lock),
+                        'type' => intval($item->type),
+                        'lead' => intval($item->lead),
+                        'item' => intval($item->row),
+                        'hash' => $item->hash,
+                        'code' => $item->code,
+                        'card' => $item->card,
+                        'name' => $item->name,
+                        'icon' => $item->icon,
+                        'tone' => $item->tone
+                    ]);
+
+                    return $list;
+                }, []),
+                'skip' => array_reduce(DB::table('users')
+                                         ->where('hide', 0)
+                                         ->orderBy('name', 'asc')
+                                         ->get()
+                                         ->toArray(), function ($list, $item) {
+                    array_push($list, [
+                        'lock' => intval($item->lock),
+                        'type' => intval($item->type),
+                        'item' => intval($item->id),
+                        'hash' => $item->hash,
+                        'mail' => $item->mail,
+                        'nick' => $item->nick,
+                        'name' => $item->name,
+                        'last' => $item->last,
+                        'face' => $item->face
+                    ]);
+
+                    return $list;
+                }, [])
+            ], 200);
+        } else {
+            return response()->json(['text' => 'Forbidden.'], 403);
         }
     }
 
@@ -983,8 +1041,8 @@ class UserController extends Controller
                                             'item' => $item,
                                             'date' => date('Y-m-d H:i:s'),
                                             'hash' => ($hash = md5(uniqid(rand(), true))),
-                                            'pass' => Hash::make($pass = rand(10000000, 99999999))])) {
-                                Mail::send('mail.code', ['name' => trim($request->get('name')),
+                                            'pass' => Hash::make($pass = Str::random(8))])) {
+                                Mail::send('mail.sign', ['name' => trim($request->get('name')),
                                                          'last' => trim($request->get('last')),
                                                          'type' => 'mail',
                                                          'hash' => $hash,

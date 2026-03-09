@@ -6,10 +6,16 @@
 <body>
 	<p>Hola {{$name}},</p>
     <p>¡Te damos la bienvenida a {{env('APP_NAME')}}!</p>
-    <p>Por favor confirma tu correo electrónico para completar el proceso de configuración mediante en el siguiente enlace:</p>
+    @if (isset($lock))
+    <p>Por favor confirma tu correo electrónico mediante el siguiente enlace:</p>
     <p><a href="{{route('lock', ['hash' => $seek])}}">{{route('lock', ['hash' => $seek])}}</a></p>
+    @endif
     <p>Correo electrónico: {{$mail}}</p>
-    <p>Código de verificación: {{$pass}}</p>
+    @if (isset($lock))
+    <p>Código de verificación: {{$lock}}</p>
+    @else
+    <p>Contraseña de ingreso: {{$pass}}</p>
+    @endif
     <br>
     <p>Gracias,<br>{{env('APP_FROM')}}</p>
 </body>

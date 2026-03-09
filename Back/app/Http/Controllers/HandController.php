@@ -28,9 +28,7 @@ use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\Controller;
 
-use Intervention\Image\ImageManager;
-
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class HandController extends Controller
 {
@@ -52,9 +50,11 @@ class HandController extends Controller
                             'base' => 'sometimes|required|numeric',
                             'note' => 'nullable|max:256',
                             'work' => 'nullable|max:16',
+                            'book' => 'nullable|url:https|max:128',
                             'mail' => 'sometimes|required|email|max:64',
                             'page' => 'nullable|max:128',
-                            'icon' => 'nullable|mimetypes:image/jpeg,image/png|max:5120'
+                            'icon' => 'nullable|mimetypes:image/jpeg,image/png|max:5120',
+                            'pass' => 'nullable|regex:/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[0-9a-zA-Z@$!%*?&]{6,12}$/',
                         ], [
                             'lock.in' => 'El campo no es válido.',
                             'type.in' => 'El campo no es válido.',
@@ -66,12 +66,15 @@ class HandController extends Controller
                             'page.max' => 'El campo no es válido.',
                             'name.max' => 'El campo no es válido.',
                             'note.max' => 'El campo no es válido.',
+                            'book.max' => 'El campo no es válido.',
+                            'book.url' => 'El campo no es válido.',
                             'mail.email' => 'El campo no es válido.',
+                            'pass.regex' => 'La contraseña debe tener minimo 6 y maximo 12 caracteres, al menos una letra mayúscula, una letra minuzcula, un numero y un caracter especial.',
                             'type.required' => 'El campo es requerido.',
                             'card.required' => 'El campo es requerido.',
                             'mail.required' => 'El campo es requerido.',
                             'name.required' => 'El campo es requerido.',
-                            'icon.mimetypes' => 'El campo debe ser una imágen válida.'
+                            'icon.mimetypes' => 'El campo debe ser una imágen válida.',
                         ]);
 
 			            if (empty($validator->fails())) {
@@ -87,72 +90,54 @@ class HandController extends Controller
                                                             ->where('hide', 0)
                                                             ->where('mail', trim($request->get('mail', $item->mail)))
                                                             ->first())) || ($item->row == $same->row))) {
-                                        if ((empty(($icon = $request->file('icon'))) || (new ImageManager(Driver::class))->read($icon)->save(sprintf('%s/%s', storage_path('files'), ($icon = md5(uniqid(rand(), true))))))) {
-                                            if (($link = intval((function ($pick, $mail, &$fail) {
-                                                $client = new Client();
-
-                                                if (boolval($pick)) {
-                                                    $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/mq4gp6t9m57evrv3/user.get.json', [
-                                                        RequestOptions::QUERY => [
-                                                            'id' => $pick
-                                                        ]
-                                                    ]);
-                                
-                                                    if (($response->getStatusCode() == 200)) {
-                                                        if (($data = json_decode($response->getBody(), true))) {
-                                                            return $data['result'][0]['ID'];
-                                                        }
-                                                    }
-                                                } else {
-                                                    $response = $client->request('POST', 'https://tallera.bitrix24.es/rest/1/ghhifu76h9zgjjsq/crm.company.add.json', [
-                                                        'form_params' => [
-                                                            'fields' => [
-                                                                'TITLE' => $name,
-                                                                'EMAIL' => [['VALUE' => $mail, 'VALUE_TYPE' => 'WORK']],
-                                                                'PHONE' => [['VALUE' => $work, 'VALUE_TYPE' => 'WORK']],
-                                                                'COMMENTS' => $note,
-                                                                'COMPANY_TYPE' => 'CUSTOMER'
-                                                            ]
-                                                        ]
-                                                    ]);
-
-                                                    if (($response->getStatusCode() == 200)) {
-                                                        if (($data = json_decode($response->getBody(), true))) {print_r($data);
-                                                            return $data['result'];
-                                                        }
+                                        if ((empty(($icon = $request->file('icon'))) || Image::make($icon)->save(sprintf('%s/%s', storage_path('files'), ($icon = md5(uniqid(rand(), true))))))) {
+                                            if (DB::table('hands')->where('row', $item->row)->update([
+                                                'mark' => date('Y-m-d H:i:s'),
+                                                'icon' => $icon ?? $item->icon,
+                                                'card' => trim($request->get('card', $item->card)),
+                                                'work' => trim($request->get('work', $item->work)),
+                                                'mail' => trim($request->get('mail', $item->mail)),
+                                                'book' => trim($request->get('book', $item->book)),
+                                                'last' => trim($request->get('last', $item->last)),
+                                                'name' => trim($request->get('name', $item->name)),
+                                                'note' => trim($request->get('note', $item->note)),
+                                                'link' => intval($request->get('link', $item->link)),
+                                                'lock' => intval($request->get('lock', $item->lock)),
+                                                'type' => intval($request->get('type', $item->type))
+                                            ])) {
+                                                if ((($type = intval($request->get('type'))))) {
+                                                    if (empty(DB::table('users')->where('link', $item->row)->update([
+                                                        'type' => $type,
+                                                        'modification' => date('Y-m-d H:i:s')
+                                                    ]))) {
+                                                        return response()->json([
+                                                            'text' => 'No se pudo actualizar el tipo.'
+                                                        ], 500);
                                                     }
                                                 }
-                                            })(intval($request->get('link')), trim($request->get('mail')), $fail)))) {
-                                                if (DB::table('hands')->where('row', $item->row)->update([
-                                                    'mark' => date('Y-m-d H:i:s'),
-                                                    'icon' => $icon ?? $item->icon,
-                                                    'link' => $link ?? $item->link,
-                                                    'card' => trim($request->get('card', $item->card)),
-                                                    'work' => trim($request->get('work', $item->work)),
-                                                    'mail' => trim($request->get('mail', $item->mail)),
-                                                    'last' => trim($request->get('last', $item->last)),
-                                                    'name' => trim($request->get('name', $item->name)),
-                                                    'note' => trim($request->get('note', $item->note)),
-                                                    'lock' => intval($request->get('lock', $item->lock)),
-                                                    'type' => intval($request->get('type', $item->type)),
-                                                ])) {
-                                                    if ((empty(empty($icon)) && empty(empty($item->icon)) && empty(@unlink(sprintf('%s/%s', storage_path('files'), $item->icon))))) {
-                                                        Log::error(sprintf('Unable to delete the file: %s', $item->icon));
-                                                    } 
 
-                                                    return response()->json([
-                                                        'link' => $link,
-                                                        'icon' => $icon,
-                                                        'text' => 'El registro fue actualizado con éxito.'
-                                                    ], 200);
-                                                } else {
-                                                    return response()->json([
-                                                        'text' => 'El registro no pudo ser actualizado.'
-                                                    ], 500);
+                                                if (($pass = trim($request->get('pass')))) {
+                                                    if (empty(DB::table('users')->where('link', $item->row)->update([
+                                                        'pass' => Hash::make($pass),
+                                                        'modification' => date('Y-m-d H:i:s')
+                                                    ]))) {
+                                                        return response()->json([
+                                                            'text' => 'No se pudo actualizar la contraseña.'
+                                                        ], 500);
+                                                    }
                                                 }
+
+                                                if ((empty(empty($icon)) && empty(empty($item->icon)) && empty(@unlink(sprintf('%s/%s', storage_path('files'), $item->icon))))) {
+                                                    Log::error(sprintf('Unable to delete the file: %s', $item->icon));
+                                                }
+
+                                                return response()->json([
+                                                    'icon' => $icon,
+                                                    'text' => 'El registro fue actualizado con éxito.'
+                                                ], 200);
                                             } else {
                                                 return response()->json([
-                                                    'text' => $fail ?? 'El registro no pudo ser guardado.'
+                                                    'text' => 'El registro no pudo ser actualizado.'
                                                 ], 500);
                                             }
                                         } else {
@@ -196,7 +181,7 @@ class HandController extends Controller
 
                         if (empty($validator->fails())) {
                             if ($request->file('file')) {
-                                if ((new ImageManager(Driver::class))->read($request->file('file'))->save(sprintf('%s/%s', storage_path('files'), ($file = md5(uniqid(rand(), true)))))) {
+                                if (Image::make($request->file('file'))->save(sprintf('%s/%s', storage_path('files'), ($file = md5(uniqid(rand(), true)))))) {
                                     if (DB::table('hands')
                                           ->where('row', $item->row)
                                           ->update(['icon' => $file, 'mark' => date('Y-m-d H:i:s')])) {
@@ -255,9 +240,21 @@ class HandController extends Controller
     					if (DB::table('hands')
 			                  ->where('row', $item->row)
 			                  ->update(['hide' => 1, 'wipe' => date('Y-m-d H:i:s')])) {
-			              	return response()->json([
-                                'text' => 'El registro fue eliminado con éxito.'
-                            ], 200);
+                            if (DB::table('users')
+                                  ->where('link', $item->row)
+                                  ->where(function ($query) {
+                                    $query->where('type', 1)
+                                          ->orWhere('type', 2)
+                                          ->orWhere('type', 3);
+                                  })->update(['hide' => 1, 'deletion' => date('Y-m-d H:i:s')])) {
+                                return response()->json([
+                                  'text' => 'El registro fue eliminado con éxito.'
+                                ], 200);
+                            } else {
+                                return response()->json([
+                                    'text' => 'El registro no pudo ser eliminado.'
+                                ], 500);
+                            }
 			            } else {
 			              	return response()->json([
                                 'text' => 'El registro no pudo ser eliminado.'
@@ -277,7 +274,7 @@ class HandController extends Controller
     				$validator = Validator::make($request->all(), [
                         'lock' => 'nullable|in:0,1',
                         'test' => 'nullable|in:0,1',
-                        'type' => 'nullable|in:1,2',
+                        'type' => 'nullable|in:1,2,3',
                         'link' => 'nullable|integer',
                         'code' => 'nullable|max:16',
                         'card' => 'required|max:16',
@@ -286,8 +283,9 @@ class HandController extends Controller
                         'note' => 'nullable|max:512',
                         'work' => 'nullable|max:16',
                         'mail' => 'required|email|max:64',
+                        'book' => 'nullable|url:https|max:128',
                         'nick' => 'nullable|regex:/^\w+(.\w+)*$/i|max:32',
-                        'pass' => 'nullable|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/',
+                        'pass' => 'nullable|regex:/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[0-9a-zA-Z@$!%*?&]{6,12}$/',
                         'icon' => 'nullable|mimetypes:image/jpeg,image/png|max:5120'
                     ], [
                         'lock.in' => 'El campo no es válido.',
@@ -301,8 +299,10 @@ class HandController extends Controller
                         'last.max' => 'El campo no es válido.',
                         'name.max' => 'El campo no es válido.',
                         'note.max' => 'El campo no es válido.',
+                        'book.max' => 'El campo no es válido.',
+                        'book.url' => 'El campo no es válido.',
                         'nick.regex' => 'El campo no es válido.',
-                        'pass.regex' => 'La contraseña debe tener minimo 8 y maximo 12 caracteres, al menos una letra mayúscula, una letra minuzcula, un numero y un caracter especial.',
+                        'pass.regex' => 'La contraseña debe tener minimo 6 y maximo 12 caracteres, al menos una letra mayúscula, una letra minuzcula, un numero y un caracter especial.',
                         'mail.email' => 'El campo no es válido.',
                         'link.integer' => 'El campo no es válido.',
                         'card.required' => 'El campo es requerido.',
@@ -341,8 +341,8 @@ class HandController extends Controller
                                                                                                    ->where('hide', 0)
                                                                                                    ->where('nick', trim($request->get('nick')))
                                                                                                    ->first()))) {
-                                                    if ((empty(($icon = $request->file('icon'))) || (new ImageManager(Driver::class))->read($icon)->save(sprintf('%s/%s', storage_path('files'), ($icon = md5(uniqid(rand(), true))))))) {
-                                                        if (($link = intval((function ($pick, $mail, &$fail) {
+                                                    if ((empty(($icon = $request->file('icon'))) || Image::make($icon)->save(sprintf('%s/%s', storage_path('files'), ($icon = md5(uniqid(rand(), true))))))) {
+                                                        if (($link = intval((function ($pick, $name, $last, $mail, $work, $note, &$fail) {
                                                             $client = new Client();
             
                                                             if (boolval($pick)) {
@@ -354,14 +354,14 @@ class HandController extends Controller
                                             
                                                                 if (($response->getStatusCode() == 200)) {
                                                                     if (($data = json_decode($response->getBody(), true))) {
-                                                                        return $data['result'][0]['ID'];
+                                                                        return isset($data['result'][0]['ID']) ? intval($data['result'][0]['ID']) : 0;
                                                                     }
                                                                 }
                                                             } else {
                                                                 $response = $client->request('POST', 'https://tallera.bitrix24.es/rest/1/ghhifu76h9zgjjsq/crm.company.add.json', [
                                                                     'form_params' => [
                                                                         'fields' => [
-                                                                            'TITLE' => $name,
+                                                                            'TITLE' => sprintf('%s %s', $name, $last),
                                                                             'EMAIL' => [['VALUE' => $mail, 'VALUE_TYPE' => 'WORK']],
                                                                             'PHONE' => [['VALUE' => $work, 'VALUE_TYPE' => 'WORK']],
                                                                             'COMMENTS' => $note,
@@ -372,11 +372,11 @@ class HandController extends Controller
             
                                                                 if (($response->getStatusCode() == 200)) {
                                                                     if (($data = json_decode($response->getBody(), true))) {
-                                                                        return $data['result'];
+                                                                        return isset($data['result']) ? intval($data['result']) : 0;
                                                                     }
                                                                 }
                                                             }
-                                                        })(intval($request->get('link')), trim($request->get('mail')), $fail)))) {
+                                                        })(intval($request->get('link')), trim($request->get('name')), trim($request->get('last')), trim($request->get('mail')), trim($request->get('work')), trim($request->get('note')), $fail)))) {
                                                             try {
                                                                 DB::beginTransaction();
 
@@ -388,6 +388,7 @@ class HandController extends Controller
                                                                     'card' => trim($request->get('card')),
                                                                     'work' => trim($request->get('work')),
                                                                     'mail' => trim($request->get('mail')),
+                                                                    'book' => trim($request->get('book')),
                                                                     'last' => trim($request->get('last')),
                                                                     'name' => trim($request->get('name')),
                                                                     'note' => trim($request->get('note')),
@@ -396,7 +397,7 @@ class HandController extends Controller
                                                                     'hash' => ($hash = md5(uniqid(rand(), true))),
                                                                     'tone' => ($tone = ['548BF2', '7DBE71', 'B68148', 'EBB410', 'E66D5F', '9976DE'][rand(0, 5)])
                                                                 ]))) {
-                                                                    if (($bind = DB::table('users')->insertGetId([
+                                                                    if (($skip = DB::table('users')->insertGetId([
                                                                         'test' => 0,
                                                                         'lock' => 0,
                                                                         'pass' => null,
@@ -416,20 +417,23 @@ class HandController extends Controller
                                                                         'pass' => ($pass = trim($request->get('pass'))) ? Hash::make($pass) : null,
                                                                         'creation' => date('Y-m-d H:i:s')
                                                                     ]))) {
-                                                                        if (($pass || DB::table('codes')->insert([
+                                                                        if ((empty(empty(($pass))) || DB::table('codes')->insert([
                                                                             'type' => 1,
-                                                                            'item' => $bind,
+                                                                            'item' => $skip,
                                                                             'date' => date('Y-m-d H:i:s'),
                                                                             'hash' => ($seek = md5(uniqid(rand(), true))),
-                                                                            'pass' =>  Hash::make(($pass = Str::random(8)))
+                                                                            'pass' =>  Hash::make(($lock = Str::random(6)))
                                                                         ]))) {
+                                                                            if (empty($pass)) {
+                                                                                Mail::send('mail.sign', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'lock' => $lock], function ($message) use ($request) {
+                                                                                    $message->to(trim($request->get('mail')), sprintf('%s %s', trim($request->get('name')), trim($request->get('last'))))
+                                                                                            ->cc(env('APP_MAIL'), env('APP_NAME'))
+                                                                                            ->from(env('APP_MAIL'), env('APP_NAME'))
+                                                                                            ->subject('Activa tu cuenta');
+                                                                                });
+                                                                            }
+
                                                                             DB::commit();
-                                                                            
-                                                                            /*Mail::send('mail.lock', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'pass' => $pass], function ($message) use ($request) {
-                                                                                $message->to(trim($request->get('mail')), sprintf('%s %s', trim($request->get('name')), trim($request->get('last'))))
-                                                                                        ->from(env('APP_MAIL'), env('APP_NAME'))
-                                                                                        ->subject('Activa tu cuenta');
-                                                                            });*/
                 
                                                                             return response()->json([
                                                                                 'item' => $item,
@@ -593,11 +597,11 @@ class HandController extends Controller
                         }
                     }
 
-                    return response()->json(['high' => ($high = $query->count()),
+                    return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($high / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
-                                                                          ->take(($take ? $take : $high))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
+                                                                          ->take(($take ? $take : $size))
                                                                           ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('made', 'desc')
                                                                           ->get()

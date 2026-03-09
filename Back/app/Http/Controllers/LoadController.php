@@ -29,7 +29,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class LoadController extends Controller
 {
-	public function main (Request $request, $task = null) {
+	public function main (Request $request, $task = null, $item = null) {
 		switch (strtolower($task)) {
             case 'make':
                 $validator = Validator::make($request->all(), [
@@ -46,7 +46,12 @@ class LoadController extends Controller
                 ]);
 
                 if (empty($validator->fails())) {
-                    $client = new Client();
+                    $client = new Client('', [
+                        'request.options' => [
+                            'timeout' => 180,
+                            'connect_timeout' => 180
+                        ]
+                    ]);
 
                     $user = Auth::user();
                     
@@ -129,7 +134,11 @@ class LoadController extends Controller
                         }, $validator->errors()->toArray())
                     ], 400);
                 }
-            case 'save':
+            case 'dump':
+                set_time_limit(900);
+
+                ignore_user_abort(true);
+
                 $validator = Validator::make($request->all(), [
 					'date' => 'required|date_format:Y-m'
 				], [
@@ -138,103 +147,51 @@ class LoadController extends Controller
 				]);
 
                 if (empty($validator->fails())) {
-                    $client = new Client();
+                    $client = new Client([
+                        'request.options' => [
+                            'timeout' => 1000,
+                            'connect_timeout' => 1000
+                        ]
+                    ]);
 
-                    $user = Auth::user();
-
-                    $deal = [];
-
-                    $deal = [];
-
-                    $load = [];
-
-                    $next = 0;
-
-                    do {
-                        $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/yph573l2l8dwjcwl/crm.deal.list.json', [
-                            RequestOptions::QUERY => [
-                                'order' => ['ID' => 'desc'],
-                                'start' => $next,
-                                'limit' => 50,
-                                'select' => ['ID', 'TITLE', 'COMMENTS', 'CONTACT_ID'],
-                                'filter' => ["COMPANY_ID" => $user->lead->firm->link, 'CATEGORY_ID' => '15']
-                            ]
-                        ]);
-
-                        if (($done = ($response->getStatusCode() == 200))) {
-                            if (($data = json_decode($response->getBody(), true))) {
-                                $deal = array_merge($deal, array_reduce($data['result'], function ($hash, $item) use ($client) {
-                                    $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/su1llgi310o5vp59/crm.contact.get.json', [
-                                        RequestOptions::QUERY => [
-                                            'id' => $item['CONTACT_ID']
-                                        ]
-                                    ]);
-                
-                                    if (($response->getStatusCode() == 200)) {
-                                        if (($data = json_decode($response->getBody(), true))) {
-                                            $hash[sprintf('D_%d', $item['ID'])] = [
-                                                'item' => $item['ID'],
-                                                'name' => $item['TITLE'],
-                                                'note' => $item['COMMENTS'],
-                                                'head' => [
-                                                    'name' => $data['result']['NAME'],
-                                                    'last' => $data['result']['LAST_NAME'],
-                                                    'icon' => isset($data['result']['PHOTO']) ? $data['result']['PHOTO'] : null
-                                                ]
-                                            ];
-                                        }
-                                    }
-
-                                    return $hash;
-                                }, []));
-                            }
-                        }
-                    } while (($done && isset($data['next']) && ($next = intval($data['next']))));
-
-                    foreach ($deal as $deal) {
-                        $next = 0;
-    
-                        do {
-                            $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/t3ez7rurxe35vrto/tasks.task.list.json', [
-                                RequestOptions::QUERY => [
-                                    'order' => ['ID' => 'desc'],
-                                    'start' => $next,
-                                    'limit' => 50,
-                                    'filter' => ['UF_CRM_TASK' => [sprintf('D_%d', $deal['item'])], '>=DATE_START' => sprintf('%s-01T00:00:00-05:00', trim($request->get('date'))), '<=DATE_START' => sprintf('%sT23:59:59-05:00', date('Y-m-t', strtotime(sprintf('%s-01', trim($request->get('date'))))))]
-                                ]
-                            ]);
-    
-                            if (($done = ($response->getStatusCode() == 200))) {
-                                if (($data = json_decode($response->getBody(), true))) {
-                                    $load = array_reduce($data['result']['tasks'], function ($hash, $item) use ($deal) {
-                                        if (isset($item['dateStart'])) {
-                                            if (isset($hash[$deal['item']])) {
-                                                $hash[$deal['item']]['time'] += intval($item['timeSpentInLogs']);
-                                            } else {
-                                                $hash[$deal['item']] = [
-                                                    'name' => $deal['name'],
-                                                    'head' => $deal['head'],
-                                                    'time' => intval($item['timeSpentInLogs']),
-                                                    'lead' => [
-                                                        'item' => $item['responsible']['id'],
-                                                        'name' => $item['responsible']['name'],
-                                                        'link' => $item['responsible']['link'],
-                                                        'role' => $item['responsible']['workPosition']
-                                                    ]
-                                                ];
-                                            }
-                                        }
-
-                                        
-            
-                                        return $hash;
-                                    }, $load);
-                                }
-                            }
-                        } while (($done && isset($data['next']) && ($next = intval($data['next']))));
+                    if (in_array(Auth::user()->type, [4, 5])) {
+                        $firm = Auth::user()->firm;
+                    } else {
+                        $firm = DB::table('firms')
+                                  ->where('hide', 0)
+                                  ->where('row', intval($item))
+                                  ->first();
                     }
-               
-                    return view('/dump/load', ['time' => time(), 'firm' => $user->lead->firm, 'load' => array_values($load), 'from' => strtotime(sprintf('%s-01', trim($request->get('date')))), 'stop' => strtotime(date('Y-m-t', strtotime(sprintf('%s-01', trim($request->get('date')))))), 'list' => [
+                    
+                    return view('/dump/load', ['time' => time(), 'firm' => $firm, 'left' => DB::table('sales')
+                                                                                                     ->where('push', 0)
+                                                                                                     ->where('bind', $firm->row)
+                                                                                                     ->where(DB::raw("DATE_FORMAT(`date`, '%Y-%m')"), trim($request->get('date')))->select(DB::raw('SUM(`time`) AS `left`'))->first()->left, 'load' => array_reduce(DB::table('times')
+                                                                                                            ->where('times.hide', 0)
+                                                                                                            ->where(DB::raw("DATE_FORMAT(`times`.`made`, '%Y-%m')"), trim($request->get('date')))
+                                                                                                            ->join('tasks', function ($join) use ($firm) {
+                                                                                                                $join->on('times.bind', 'tasks.row')
+                                                                                                                     ->where('tasks.hide', 0)
+                                                                                                                     ->where('tasks.bind', $firm->link);
+                                                                                                            })
+                                                                                                            ->select('tasks.seek', 'tasks.name', DB::raw('SUM(`times`.`load`) AS `time`'))
+                                                                                                            ->groupBy('tasks.seek')
+                                                                                                            ->orderBy('times.made', 'desc')
+                                                                                                            ->get()
+                                                                                                            ->toArray(), function ($list, $item) use ($firm) {
+                        array_push($list, ['cost' => (function ($firm, $item) {
+                            switch ($firm->plan) {
+                                case 1:
+                                    return ($firm->cost + ($firm->rate * max((($item->time / 3600) - $firm->time), 0)));
+                                case 3:
+                                    return ($firm->rate * ($item->time / 3600));
+                                case 4:
+                                    return $firm->cost;
+                            }
+                        })($firm, $item), 'time' => intval($item->time), 'name' => $item->name]);
+
+                        return $list;
+                    }, []), 'date' => trim($request->get('date')), 'from' => strtotime(sprintf('%s-01', trim($request->get('date')))), 'stop' => strtotime(date('Y-m-t', strtotime(sprintf('%s-01', trim($request->get('date')))))), 'list' => [
                         1 => 'Enero',
                         2 => 'Febrero',
                         3 => 'Marzo',
@@ -255,11 +212,11 @@ class LoadController extends Controller
 					}, $validator->errors()->toArray())], 400);
 				}
 			case 'load':
-                set_time_limit(0);
+                set_time_limit(900);
+
+                ignore_user_abort(true);
 
                 $client = new Client();
-
-                $firm = Auth::user()->firm;
 
                 $done = false;
 
@@ -271,7 +228,16 @@ class LoadController extends Controller
 
                 $next = 0;
 
-                if (intval($firm->link)) {
+                if (in_array(Auth::user()->type, [4, 5])) {
+                    $firm = Auth::user()->firm;
+                } else {
+                    $firm = DB::table('firms')
+                              ->where('hide', 0)
+                              ->where('row', intval($item))
+                              ->first();
+                }
+
+                /*if (isset($firm->link)) {
                     do {
                         $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/yph573l2l8dwjcwl/crm.deal.list.json', [
                             RequestOptions::QUERY => [
@@ -374,7 +340,52 @@ class LoadController extends Controller
                     }
 
                     return $list;
-                }, [])], 200);
+                }, [])], 200);*/
+
+                $query = DB::table('times')
+                           ->where('times.hide', 0)
+                           ->join('tasks', function ($join) use ($firm) {
+                                $join->on('times.bind', 'tasks.row')
+                                     ->where('tasks.hide', 0)
+                                     ->where('tasks.bind', $firm->link);
+                           });
+
+                return response()->json(['size' => ($size = $query->count()),
+                                         'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
+                                         'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                         'list' => array_reduce($query->skip(($page * $take))
+                                                                      ->take(($take ? $take : $size))
+                                                                      ->select('times.made', DB::raw('SUM(`times`.`load`) AS `time`'), DB::raw("DATE_FORMAT(`times`.`made`, '%Y-%m') AS `date`"))
+                                                                      ->groupBy('date')
+                                                                      ->orderBy('times.made', 'desc')
+                                                                      ->get()
+                                                                      ->toArray(), function ($list, $item) use ($firm) {
+                array_push($list, ['date' => $item->date, 'cost' => (function ($firm, $item) {
+                    switch ($firm->plan) {
+                        case 1:
+                            return ($firm->cost + ($firm->rate * max((($item->time / 3600) - $firm->time), 0)));
+                        case 3:
+                            return ($firm->rate * ($item->time / 3600));
+                        case 4:
+                            return $firm->cost;
+                    }
+                })($firm, $item), 'name' => sprintf('%s de %d', [
+                    1 => 'Enero',
+                    2 => 'Febrero',
+                    3 => 'Marzo',
+                    4 => 'Abril',
+                    5 => 'Mayo',
+                    6 => 'Junio',
+                    7 => 'Julio',
+                    8 => 'Agosto',
+                    9 => 'Septiembre',
+                    10 => 'Octubre',
+                    11 => 'Noviembre',
+                    12 => 'Diciembre'
+                ][date('n', ($time = strtotime($item->made)))], date('Y', $time)), 'time' => intval($item->time)]);
+
+                return $list;
+            }, [])]);
 		}
 	}
 }

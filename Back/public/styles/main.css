@@ -1,0 +1,18 @@
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+*, :after, :before {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  font-size: 1em;
+  font-family: 'Lato', sans-serif;
+}

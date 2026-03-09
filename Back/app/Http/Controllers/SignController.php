@@ -74,14 +74,16 @@ class SignController extends Controller
                         default:
                             $validator = Validator::make($request->all(), [
                                 'list' => 'required|array',
-                                'cell' => 'required|in:true,false',
+                                'cell' => 'nullable|in:0,1,true,false',
                                 'hint' => 'required|min:1|max:126',
                                 'note' => 'required|min:1|max:256',
                                 'file' => 'required|mimetypes:application/pdf|max:5120',
                                 'list.*.name' => 'required|min:1|max:64',
+                                'list.*.from' => 'required|regex:/^(\+?[0-9]{2,3})$/',
                                 'list.*.mail' => 'required|email|max:64',
-                                'list.*.cell' => 'required|regex:/^(\+?[0-9]{2,3})?\s?([0-9]{3})(\s?[0-9]{3})?\s?([0-9]{2,4})$/'
+                                'list.*.cell' => 'required|regex:/^([0-9]{3})(\s?[0-9]{3})?\s?([0-9]{2,4})$/'
                             ], [
+                                'cell.in' => 'El campo no es válido.',
                                 'name.min' => 'El campo no es válido.',
                                 'hint.min' => 'El campo no es válido.',
                                 'note.min' => 'El campo no es válido.',
@@ -91,7 +93,6 @@ class SignController extends Controller
                                 'note.max' => 'El campo no es válido.',
                                 'file.max' => 'El campo no es válido.',
                                 'mail.email' => 'El campo no es válido.',
-                                'cell.boolean' => 'El campo no es válido.',
                                 'name.required' => 'El campo es requerido.',
                                 'mail.required' => 'El campo es requerido.',
                                 'hint.required' => 'El campo es requerido.',
@@ -106,20 +107,21 @@ class SignController extends Controller
                                     'Content-Length' => strlen(($data = json_encode([
                                         'file' => base64_encode(file_get_contents($request->file('file'))),
                                         'name' => pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME),
-                                        'email' => env('API_AUCO_USER'),
+                                        'email' => env('API_AUCO_EMAIL'),
                                         'subject' => trim($request->get('hint')),
                                         'message' => trim($request->get('note')),
                                         'remember' => 3,
                                         'otpCode' => true,
                                         'options' => [
                                             'otpCode' => 'phone',
-                                            'whatsapp' => empty(strcmp($request->get('cell'), 'true'))
+                                            'whatsapp' => boolval($request->get('cell'))
                                         ],
                                         'signProfile' => array_map(function ($item) {
                                             return [
                                                 'name' => trim($item['name']),
                                                 'email' => trim($item['mail']),
-                                                'phone' => trim($item['cell']),
+                                                'phone' => sprintf('%s%s', trim($item['from']), trim($item['cell'])),
+                                                'label' => true
                                             ];
                                         }, $request->get('list'))
                                     ]))),
@@ -143,7 +145,7 @@ class SignController extends Controller
                                                 'date' => date('Y-m-d H:i:s'),
                                                 'name' => trim($item['name']),
                                                 'mail' => trim($item['mail']),
-                                                'cell' => trim($item['cell']),
+                                                'cell' => sprintf('%s%s', trim($item['from']), trim($item['cell'])),
                                                 'hash' => md5(uniqid(rand(), true)),
                                                 'hint' => trim($request->get('hint')),
                                                 'note' => trim($request->get('note')),
@@ -152,7 +154,7 @@ class SignController extends Controller
                                         }
 
                                         return response()->json([
-                                            'code' => $data['document'],'cell'=>boolval($request->get('cell'))
+                                            'code' => $data['document'],'cell' => boolval($request->get('cell'))
                                         ], 200);
                                     } else {
                                         return response()->json([
@@ -161,7 +163,7 @@ class SignController extends Controller
                                     }
                                 } else {
                                     return response()->json([
-                                        'text' => 'No se pudo realizar la solicitud.','code'=>$response->getStatusCode(), 'body' => $data
+                                        'text' => 'No se pudo realizar la solicitud.','code'=>$response->getStatusCode(), 'body' => json_decode($response->getBody(), true),'data' => $data
                                     ], 404);
                                 }
                             } else {
@@ -247,8 +249,8 @@ class SignController extends Controller
 
                     return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($take ? ($page * $take) : 0))
                                                                           ->take(($take ? $take : $size))
                                                                           ->select('*', DB::raw(sprintf("CONVERT_TZ(date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('date', 'desc')

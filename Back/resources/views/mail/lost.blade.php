@@ -19,12 +19,12 @@
 		    font-size: 16px;
 		    border: none;
 		    color: #FFFFFF;
-		    background: #231F21;
+		    background: #2ba5ae;
 		}
 	</style>
     <h2>Cambiar tu contraseña</h2>
-	<p>Hola {{$name}}, hemos recibido una peticióon de cambio dee contraseña para tu cuenta en <b>[Ganado]</b>.</p>
-	<p>Si tu no has solicitado el cambio de contraseña, entonces puedes ignorar este correo electrónicco y tu contraseña no será cambiada.</p>
+	<p>Hola {{$name}}, hemos recibido una petición de cambio dee contraseña para tu cuenta en <b>Cadivas]</b>.</p>
+	<p>Si tu no has soolicitado el cambio de contraseña, entonces puedes ignorar este correo electrónicco y tu contraseña no será cambiada.</p>
 	<p>El enlace a continuación permanecerá activo por 24 horas.</p>
 	<a href="{{route('pass', ['hash' => $hash, 'pass' => $pass])}}">Cambiar contraseña</a>
 </body>

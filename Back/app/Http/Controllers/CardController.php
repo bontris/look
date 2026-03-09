@@ -26,9 +26,7 @@ use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\Controller;
 
-use Intervention\Image\ImageManager;
-
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class CardController extends Controller
 {
@@ -42,7 +40,7 @@ class CardController extends Controller
     				case 'save':
     					$validator = Validator::make($request->all(), [
                             'lock' => 'nullable|in:0,1',
-                            'sort' => 'required|in:1,2',
+                            'sort' => 'required|in:0,1,2',
                             'type' => 'required|in:1,2,3',
                             'code' => 'nullable|max:16',
                             'more' => 'nullable|max:32',
@@ -73,7 +71,7 @@ class CardController extends Controller
                                                   ->where('hide', 0)
                                                   ->where('name', trim($request->get('name', $item->name)))
                                                   ->first())) || ($item->row == $same->row))) {
-                                if ((empty(($snap = $request->file('snap'))) || (new ImageManager(Driver::class))->read($snap)->save(sprintf('%s/%s', public_path('images'), ($snap = md5(uniqid(rand(), true))))))) {
+                                if ((empty(($snap = $request->file('snap'))) || Image::make($snap)->save(sprintf('%s/%s', storage_path('files'), ($snap = md5(uniqid(rand(), true))))))) {
                                     if (DB::table('cards')->where('row', $item->row)->update([
                                         'mark' => date('Y-m-d H:i:s'),
                                         'snap' => $snap ?? $item->snap,
@@ -195,7 +193,7 @@ class CardController extends Controller
     			case 'make':
     				$validator = Validator::make($request->all(), [
                         'lock' => 'nullable|in:0,1',
-                        'sort' => 'required|in:1,2',
+                        'sort' => 'required|in:0,1,2',
                         'type' => 'required|in:1,2,3',
                         'code' => 'nullable|max:16',
                         'more' => 'nullable|max:32',
@@ -231,7 +229,7 @@ class CardController extends Controller
                                         ->where('hide', 0)
                                         ->where('name', trim($request->get('name')))
                                         ->first())) {
-                                if ((new ImageManager(Driver::class))->read($request->file('snap'))->save(sprintf('%s/%s', public_path('images'), ($snap = md5(uniqid(rand(), true)))))) {
+                                if (Image::make($request->file('snap'))->save(sprintf('%s/%s', storage_path('files'), ($snap = md5(uniqid(rand(), true)))))) {
                                     if (($item = DB::table('cards')->insertGetId([
                                         'code' => $code,
                                         'snap' => $snap,
@@ -353,8 +351,8 @@ class CardController extends Controller
 
                     return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
                                                                           ->take(($take ? $take : $size))
                                                                           ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('made', 'desc')

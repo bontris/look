@@ -1,0 +1,1332 @@
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loop {
+	0% {
+	    stroke-dasharray: 1.25, 250;
+	    stroke-dashoffset: 0;
+	}
+
+	50% {
+	    stroke-dasharray: 111.25, 250;
+	    stroke-dashoffset: -43.75;
+	}
+
+	100% {
+	    stroke-dasharray: 111.25, 250;
+	    stroke-dashoffset: -155;
+	}
+}
+
+@font-face {
+    font-family: 'Lato';
+    font-weight: 400;
+    font-style: normal;
+    src: url(../fonts/lato.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+    padding: 15px 15px;
+    height: 100%;
+    font-size: 1em;
+    font-family: 'Lato', sans-serif;
+}
+
+body {
+    display: table;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 100%;
+    min-width: 320px;
+    min-height: 100%;
+    background: #F8F8F8;
+
+    border: 1px dashed #ADADAD;
+}
+
+
+i.icon {
+	position: absolute;
+    display: block;
+    margin: auto;
+    font-size: 24px;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 24px;
+    height: 24px;
+}
+
+i.icon:before {
+	color: #FFFFFF;
+}
+
+/** #head */
+
+div#head {
+    display: block;
+    z-index: 2;
+    width: 100%;
+    height: 70px;
+}
+
+div#head.drop {
+    animation: drop 0.6s ease;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+}
+
+div#head div.wrap {
+    position: relative;
+    display: block;
+    margin: 0px auto;
+    padding: 0px 10px;
+    min-width: 320px;
+    max-width: 1440px;
+    width: 90%;
+    height: 100%;
+}
+
+div#head div.logo {
+    display: block;
+    float: left;
+    margin: 0px 0px;
+    padding: 5px 0px;
+}
+
+div#head div.logo img {
+	display: block;
+    float: left;
+	border: none;
+	width: auto;
+	height: 60px;
+}
+
+div#head div.logo div {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    padding: 5px 20px;
+    width: 250px;
+}
+
+div#head div.logo div b {
+    overflow: hidden;
+    display: block;
+    font-weight: 500;
+    line-height: 20px;
+    font-size: 16px;
+    color: #131313;
+}
+
+div#head div.logo div p {
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 0px;
+    font-weight: 500;
+    line-height: 15px;
+    font-size: 12px;
+    color: #535353;
+}
+
+div#head div.main {
+    display: block;
+    float: right;
+    margin: 0px -10px;
+}
+
+div#head div.main div.menu {
+    position: relative;
+    display: block;
+    float: left;
+    padding: 18px 10px;
+}
+
+div#head div.main div.menu nav {
+    position: relative;
+    display: block;
+    margin: auto 0px;
+    padding: 0px 0px;
+}
+
+div#head div.main div.menu input {
+    display: none;
+}
+
+div#head div.main div.menu label {
+    overflow: hidden;
+    display: none;
+    padding: 5px 5px;
+}
+
+div#head div.main div.menu svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    fill: #131313;
+}
+
+div#head div.main div.menu dl {
+    position: relative;
+    display: block;
+    float: left;
+    margin: 0px -10px;
+    padding: 0px;
+}
+
+div#head div.main div.menu dt {
+    position: relative;
+    float: left;
+    margin: 0px 0px;
+    padding: 0px 10px;
+}
+
+div#head div.main div.menu dt a {
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 34px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #707070;
+}
+
+div#head div.main div.menu dt a:hover {
+    color: #C63838;
+}
+
+div#head div.main div.menu dt:hover ul {
+    visibility: visible;
+    display: block;
+}
+
+div#head div.main div.menu em {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    padding: 0px 24px 0px 0px;
+    text-decoration: none;
+    text-transform: uppercase;
+    line-height: 34px;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 14px;
+    color: #3A3A44;
+}
+
+div#head div.main div.menu em:after {
+    position: absolute;
+    display: block;
+    content: '';
+    top: 14px;
+    right: 5px;
+    border-style: solid;
+    border-width: 6px 5px 0px 5px;
+    border-color: #888888 transparent transparent transparent;
+}
+
+div#head div.main div.menu ul {
+    visibility: hidden;
+    position: absolute;
+    display: none;
+    padding: 0px 0px;
+    margin: 0px 0px;
+    list-style: none;
+    top: 100%;
+    right: 5px;
+    width: 280px;
+    background: #FFFFFF;
+    border: 1px solid #D3D3D3;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+}
+
+div#head div.main div.menu li {
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 15px;
+}
+
+div#head div.main div.menu li:hover {
+    background: #F9F9F9;
+}
+
+div#head div.main div.menu li:first-child:hover:after {
+    border-bottom-color: #F9F9F9;
+}
+
+div#head div.main div.menu li:first-child:before {
+    position: absolute;
+    display: block;
+    content: '';
+    top: -16px;
+    right: 6px;
+    border-top: none;
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent;
+    border-bottom-color: #D3D3D3;
+}
+
+div#head div.main div.menu li a {
+    overflow: auto;
+    display: block;
+    padding: 5px 0px;
+    white-space: normal;
+    line-height: 20px;
+}
+
+div#head div.main div.menu li:first-child:after {
+    position: absolute;
+    display: block;
+    content: '';
+    top: -15px;
+    right: 6px;
+    border-top: none;
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent;
+    border-bottom-color: #FFFFFF;
+}
+
+div#head div.host {
+    display: block;
+    float: right;
+}
+
+div#head div.host em {
+    position: relative;
+    display: block;
+    z-index: 3;
+    top: 9px;
+    left: 0px;
+    margin: 0px 0px;
+    padding: 0px 0px;
+    width: 58px;
+    height: 58px;
+    cursor: pointer;
+    border-color: transparent;
+}
+
+div#head div.host em img {
+    position: absolute;
+    display: block;
+    margin: auto;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 34px;
+    height: 34px;
+    background: #B3B3B3;
+    border-width: 2px;
+    border-color: #535353;
+    border-style: solid;
+    border-radius: 50%;
+}
+
+div#head div.host dl {
+    transition: all 0.10s ease;
+    position: absolute;
+    visibility: hidden;
+    display: block;
+    opacity: 0;
+    margin: 0px;
+    padding: 0px;
+    z-index: 2;
+    top: 67px;
+    right: -3px;
+    width: 300px;
+    height: 0px;
+    background: #F2F2F2;
+    border-style: solid;
+    border-color: #2B3B42;
+    border-width: 0px 3px 3px 3px;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+}
+
+div#head div.host dt {
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 0px;
+}
+
+div#head div.host dt img {
+    display: block;
+    float: left;
+    width: 48px;
+    height: 48px;
+    margin-right: 15px;
+    border-style: solid;
+    border-radius: 50%;
+    border-width: 2px;
+    border-color: #FFFFFF;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+div#head div.host dt div {
+    display: block;
+    float: left;
+    width: 200px;
+}
+
+div#head div.host dt p {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 10px 15px;
+}
+
+div#head div.host dt p:after {
+    position: absolute;
+    display: block;
+    content: '';
+    left: 0px;
+    bottom: 0px;
+    width: 100%;
+    height: 1px;
+    background: #E3E3E3;
+}
+
+div#head div.host dt a {
+    transition: all 0.10s ease;
+    display: block;
+    height: 0px;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-weight: 400;
+    font-size: 12px;
+    padding: 10px 15px;
+    color: #475366;
+}
+
+div#head div.host dt b {
+    overflow: hidden;
+    display: block;
+    line-height: 24px;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    color: #535353;
+}
+
+div#head div.host dt i {
+    overflow: hidden;
+    display: block;
+    line-height: 22px;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    color: #535353;
+}
+
+div#head div.host:hover em {
+    background: #F2F2F2;
+}
+
+div#head div.host:hover dl {
+    visibility: visible;
+    opacity: 1;
+    height: auto;
+}
+
+div#head div.host:hover a {
+    height: 34px;
+}
+
+div#head div.host dt:hover a {
+    background: #FBFBFB;
+    color: #62BB62;
+}
+
+div#head div.knob {
+    display: block;
+    float: left;
+    padding: 18px 10px;
+}
+
+div#head div.knob a {
+    transition: all 0.25s ease;
+    display: block;
+    padding: 0px 30px;
+    text-decoration: none;
+    text-transform: uppercase;
+    height: 34px;
+    line-height: 30px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #FFFFFF;
+    background: #469F56;
+    border: 2px solid #469F56;
+}
+
+div#head div.knob a:hover {
+    background: #FFFFFF;
+    color: #469F56;
+}
+
+div#body {
+    display: table-row;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+div#view {
+    overflow: hidden;
+    display: block;
+    background: #000000;
+}
+
+div#view div.wrap {
+    display: block;
+    margin: 0px auto;
+    min-width: 300px;
+    width: 100%;
+}
+
+div#view div.grid {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 95px;
+    width: 100%;
+    height: 520px;
+}
+
+div#view div.grid:hover sup {
+    opacity: 1;
+    left: 0px;
+}
+
+div#view div.grid:hover sub {
+    opacity: 1;
+    right: 0px;
+}
+
+div#view div.item {
+    display: block;
+    float: left;
+    padding: 0px 5px;
+    height: 100%;
+}
+
+div#view div.item input {
+    display: none;
+}
+
+div#view div.item input:checked ~ div {
+    visibility: visible;
+}
+
+div#view div.item input:checked ~ div img {
+    opacity: 1;
+}
+
+div#view div.item input:checked ~ div b {
+    left: 0px;
+}
+
+div#view div.item input:checked ~ div p {
+    opacity: 1;
+    top: 0px;
+}
+
+div#view div.item input:checked ~ label {
+    background: #FFFFFF;
+}
+
+div#view div.item div {
+    position: absolute;
+    visibility: hidden;
+    display: block;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+div#view div.item label {
+    transition: all 0.6s ease;
+    position: relative;
+    overflow: hidden;
+    display: block;
+    float: left;
+    z-index: 1;
+    text-indent: 100%;
+    top: 500px;
+    width: 50px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+}
+
+div#view div.item label:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+div#view sup {
+    transition: all 0.6s ease;
+    position: absolute;
+    display: block;
+    opacity: 0;
+    z-index: 1;
+    top: 0px;
+    left: 50px;
+    width: 84px;
+    height: 100%;
+    cursor: pointer;
+}
+
+div#view sup:hover path {
+    fill: rgba(250, 250, 250, 0.8);
+}
+
+div#view sub {
+    transition: all 0.6s ease;
+    position: absolute;
+    display: block;
+    opacity: 0;
+    z-index: 1;
+    top: 0px;
+    right: 50px;
+    width: 84px;
+    height: 100%;
+    cursor: pointer;
+}
+
+div#view sub:hover path {
+    fill: rgba(250, 250, 250, 0.8);
+}
+
+div#view path {
+    transition: all 0.6s ease;
+    fill: #FFFFFF;/*rgba(150, 150, 150, 0.6);*/
+}
+
+div#view svg {
+    position: absolute;
+    display: block;
+    margin: auto;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 24px;
+    height: 24px;
+}
+
+div#view img {
+    transition: opacity 0.6s ease;
+    position: absolute;
+    display: block;
+    opacity: 0;
+    border: none;
+    margin: none;
+    width: 100%;
+    height: 100%;
+}
+
+div#view b {
+    transition: left 0.4s ease;
+    position: relative;
+    display: block;
+    z-index: 1;
+    left: 100%;
+    width: 80%;
+    margin: 0px 90px;
+    padding: 20px 0px;
+    text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.3);
+    text-transform: uppercase;
+    font-weight: 900;
+    font-size: 48px;
+    color: #F7F7F7;
+}
+
+div#view b:after {
+    position: absolute;
+    display: block;
+    content: '';
+    left: 5px;
+    bottom: 5px;
+    width: 60px;
+    height: 3px;
+    background: #1B8438;
+}
+
+div#view p {
+    transition: opacity 0.6s, top 0.2s ease 0.2s;
+    position: relative;
+    display: block;
+    z-index: 1;
+    opacity: 0;
+    top: 60%;
+    width: 80%;
+    margin: 10px 90px;
+    padding: 0px 0px;
+    text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 28px;
+    color: #F7F7F7;
+}
+
+div#view a {
+    overflow: hidden;
+    display: block;
+    padding: 0px 5px;
+    height: 100%;
+}
+
+div#home {
+    overflow: hidden;
+    display: block;
+}
+
+div#home div.wrap {
+    position: relative;
+    display: block;
+    margin: 0px auto;
+    padding: 50px 10px;
+    min-width: 320px;
+    max-width: 1440px;
+    width: 90%;
+    height: 100%;
+}
+
+div#home div.grid {
+    overflow: hidden;
+    display: block;
+    margin: -30px -30px;
+}
+
+div#home div.item {
+    overflow: hidden;
+    display: block;
+    float: left;
+    width: 50%;
+    padding: 30px 30px;
+}
+
+div#home div.pane {
+    position: relative;
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    height: 480px;
+}
+
+div#home div.back {
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+div#home div.back:after {
+    position: absolute;
+    display: block;
+    content: '';
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background: rgb(248, 248, 248, 0.4);
+}
+
+div#home div.back img {
+    display: block;
+    border: none;
+    width: 100%;
+    height: auto;
+}
+
+div#home div.text {
+    position: absolute;
+    z-index: 2;
+    overflow: hidden;
+    display: block;
+    padding: 30px 15px;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    color: #707070;
+}
+
+div#home div.text h2 {
+    overflow: hidden;
+    display: block;
+    text-align: center;
+    font-weight: 700;
+    font-size: 28px;
+}
+
+div#home div.text h3 {
+    overflow: hidden;
+    display: block;
+    padding: 20px 0px 10px 0px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 22px;
+}
+
+div#home div.text p {
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+    padding: 0px 0px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+div#page {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+div#page div.wrap {
+  	display: block;
+  	margin: 0px auto;
+  	padding: 0px 10px;
+  	min-width: 360px;
+  	max-width: 1280px;
+  	width: 90%;
+  	height: 100%;
+}
+
+div#page div.path {
+    position: relative;
+    display: block;
+    padding: 10px 0px;
+    background: #FBFBFB;
+}
+
+div#page div.path:after {
+    position: absolute;
+    display: block;
+    content: '';
+    top: 100%;
+    left: 0px;
+    width: 100%;
+    height: 1px;
+    background: #E1E8EE;
+}
+
+div#page div.path em {
+    overflow: hidden;
+    display: block;
+    margin: 0px 0px;
+}
+
+div#page div.path i {
+    display: block;
+    color: #B4B8BF;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+div#page div.path b {
+    display: block;
+    padding: 3px 0px;
+    color: #4E4E4E;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: bold;
+}
+
+div#page div.path ul {
+    list-style: none;
+    overflow: hidden;
+    display: block;
+    margin: -5px 0px;
+    padding: 0px 0px;
+}
+
+div#page div.path li {
+    display: block;
+    float: left;
+    padding: 5px 0px;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #B4B8BF;
+}
+
+div#page div.path li + li:before {
+  content: '\002f';
+  padding: 0px 5px;
+  color: #B2B2B2;
+}
+
+div#page div.path a {
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #616F78;
+}
+
+div#page div.path a:hover {
+  color: #62BB62;
+}
+
+div#page div.main {
+    display: block;
+    padding: 30px 0px;
+}
+
+div#page div.grid {
+    display: block;
+    clear: both;
+    margin: -5px -5px;
+}
+
+div#page div.item {
+    display: block;
+    float: left;
+    width: 100%;
+    padding: 5px 5px;
+}
+
+div#page div.rich h1 {
+    position: relative;
+    display: block;
+    padding: 0px 0px 0px 15px;
+    margin: 0px 0px 10px 0px;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 26px;
+    color: #232323;
+}
+
+div#page div.rich h1:before {
+    position: absolute;
+    display: block;
+    content: '';
+    width: 5px;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    bottom: 3px;
+    background: #62BB62;
+}
+
+div#page div.rich h2 {
+    position: relative;
+    display: block;
+    padding: 0px 0px 0px 0px;
+    margin: 20px 0px 10px 0px;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 18px;
+    color: #232323;
+}
+
+div#page div.rich ul {
+    display: block;
+    margin: 0px 0px 0px 0px;
+    padding: 10px 0px 0px 40px;
+}
+
+div#page div.rich li {
+    position: relative;
+    display: block;
+    padding: 5px 0px;
+    margin: 0px 0px;
+    list-style: none;
+    text-align: justify;
+    line-height: 22px;
+    font-weight: 500;
+    font-size: 16px;
+    color: #535353;
+}
+
+div#page div.rich li:before {
+    position: absolute;
+    display: block;
+    content: '';
+    top: 0px;
+    left: -20px;
+    bottom: 0px;
+    width: 10px;
+    height: 10px;
+    margin: 10px 0px;
+    background: #62BB62;
+}
+
+div#page div.rich p {
+    position: relative;
+    display: block;
+    padding: 10px 0px;
+    margin: 0px 0px;
+    line-height: 22px;
+    font-weight: 500;
+    font-size: 16px;
+    color: #535353;
+}
+
+div#page div.rich b {
+    color: #393939;
+}
+
+div#foot {
+	position: relative;
+  	display: block;
+  	width: 100%;
+}
+
+div#foot div.list {
+    overflow: hidden;
+    display: block;
+    padding: 10px 10px;
+}
+
+div#foot div.list img {
+    position: relative;
+    display: block;
+    border: none;
+    width: 70%;
+    height: auto;
+    margin: 0px auto;
+}
+
+div#foot div.main {
+	position: relative;
+ 	display: block;
+}
+
+div#foot div.main div.wrap {
+  	overflow: hidden;
+  	display: block;
+ 	 margin: 0px auto;
+  	padding: 10px 10px;
+  	min-width: 360px;
+  	max-width: 1440px;
+  	width: 90%;
+}
+
+div#foot div.main div.grid {
+  	display: block;
+  	margin: 0px -10px;
+}
+
+div#foot div.main div.item {
+  	display: block;
+  	float: left;
+  	width: 25%;
+  	padding: 0px 10px;
+}
+
+div#foot div.main div.logo {
+  	position: relative;
+  	display: block;
+}
+
+div#foot div.main div.logo img {
+	display: block;
+	border: none;
+	width: 146px;
+	height: 60px;
+}
+
+div#foot div.main div.menu {
+  	position: relative;
+  	display: block;
+}
+
+div#foot div.main div.menu em {
+  	overflow: hidden;
+  	display: block;
+  	text-transform: uppercase;
+  	line-height: 2.2em;
+  	font-weight: 700;
+  	font-style: normal;
+  	font-size: 12px;
+  	color: #3A3A44;
+}
+
+div#foot div.main div.menu dl {
+	overflow: hidden;
+	display: block;
+	margin: -5px 0px;
+	margin: 0px 0px;
+}
+
+div#foot div.main div.menu dt {
+	overflow: hidden;
+	display: block;
+	margin: 0px 0px;
+	margin: 5px 0px;
+}
+
+div#foot div.main div.menu p {
+	overflow: hidden;
+	display: block;
+	margin: 0px 0px;
+	margin: 0px 0px;
+	line-height: 2.2em;
+  	font-weight: 500;
+  	font-size: 13px;
+	color: #3A3A44;
+}
+
+div#foot div.main div.menu a {
+	overflow: hidden;
+	display: block;
+	float: left;
+	margin: 0px 0px;
+	margin: 0px 0px;
+	text-decoration: none;
+	line-height: 2.2em;
+  	font-weight: 500;
+  	font-size: 13px;
+	color: #3A3A44;
+}
+
+div#foot div.main div.menu a:hover {
+	color: #C63838;
+}
+
+div#foot div.pane {
+  	overflow: hidden;
+  	display: block;
+}
+
+div#foot div.pane div.wrap {
+  	overflow: hidden;
+  	display: block;
+  	margin: 0px auto;
+  	padding: 0px 10px;
+  	min-width: 360px;
+  	max-width: 1440px;
+  	width: 90%;
+}
+
+div#foot div.pane div.menu {
+  	overflow: hidden;
+  	display: block;
+  	float: left;
+  	padding: 20px 0px;
+}
+
+div#foot div.pane div.menu ul {
+  	position: relative;
+  	display: block;
+  	margin: 0px -5px;
+  	padding: 0px;
+  	list-style: none;
+}
+
+div#foot div.pane div.menu li {
+  	position: relative;
+  	overflow: hidden;
+  	display: block;
+  	float: left;
+  	margin: 0px 0px;
+  	padding: 0px 5px;
+}
+
+div#foot div.pane div.menu a {
+  	text-transform: uppercase;
+  	text-decoration: none;
+  	font-size: 12px;
+  	color: #606970;
+}
+
+div#foot div.pane div.menu a:hover {
+  	text-decoration: underline;
+}
+
+div#foot div.pane div.side {
+  	position: relative;
+  	overflow: hidden;
+  	display: block;
+  	float: right;
+  	padding: 10px 0px;
+}
+
+div#foot div.pane div.side strong {
+  	display: block;
+  	font-weight: 500;
+  	font-size: 12px;
+  	line-height: 20px;
+  	color: #606970;
+}
+
+div#foot div.pane div.side small {
+  	display: block;
+  	font-weight: 500;
+  	font-size: 11px;
+  	line-height: 15px;
+  	color: #606970;
+  	float: right;
+}
+
+div#foot div.pane div.side small a {
+	text-decoration: none;
+  	color: inherit;
+}
+
+div#foot div.pane div.side small a:hover {
+  	color: #C63838;
+}
+
+div#foot div.pane div.side span {
+  	position: absolute;
+  	display: block;
+  	float: right;
+  	top: 0px;
+  	right: 0px;
+  	width: 40px;
+  	height: 100%;
+}
+
+div#foot div.pane div.side span a {
+  	transition: all 0.25s ease;
+  	position: relative;
+  	display: block;
+  	width: 100%;
+  	height: 100%;
+}
+
+div#foot div.pane div.side span img {
+  	position: absolute;
+  	display: block;
+  	top: 0px;
+  	left: 0px;
+  	right: 0px;
+  	bottom: 0px;
+  	margin: auto;
+  	border: none;
+}
+
+@media all and (max-width: 768px) {
+  	div#head div.main div.menu nav {
+    	overflow: hidden;
+    	display: none;
+    	background: #FFFFFF;
+    	box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.6);
+  	}
+
+  	div#head div.main div.menu {
+    	position: static;
+    	padding: 0px 0px;
+    	width: 100%;
+  	}
+
+  	div#head div.main div.menu label {
+    	position: absolute;
+    	display: block;
+    	top: 18px;
+    	right: 15px;
+  	}
+
+  	div#head div.main div.menu input:checked + nav {
+    	display: block;
+  	}
+
+  	div#head div.main div.menu ul {
+    	position: static;
+    	width: 100%;
+    	border: none;
+    	box-shadow: none;
+  	}
+
+  	div#head div.main div.menu dl {
+    	margin: 0px 0px;
+    	float: none;
+  	}
+
+  	div#head div.main div.menu dt {
+    	padding: 10px 15px;
+    	float: none;
+  	}
+
+  	div#head div.main div.menu li:hover {
+    	background: transparent;
+  	}
+
+  	div#head div.main div.menu dt + dt:before {
+    	position: absolute;
+    	display: block;;
+    	content: '';
+    	top: 0px;
+    	left: 0px;
+    	width: 100%;
+    	height: 1px;
+    	background: #D9D9D9;
+ 	}
+
+  	div#head div.main div.knob {
+    	display: none;
+  	}
+
+  	div#head div.wrap {
+    	width: 100%;
+  	}
+
+  	div#head div.logo {
+    	float: none;
+  	}
+
+  	div#head div.main {
+    	float: none;
+  	}
+  
+  	div#foot div.main div.wrap {
+    	padding: 20px 10px 10px 10px;
+    	width: 100%;
+  	}
+
+  	div#foot div.main div.grid {
+    	margin: -5px 0px;
+  	}
+
+  	div#foot div.main div.item {
+    	padding: 10px 0px;
+    	float: none;
+    	width: 100%;
+  	}
+
+  	div#foot div.pane div.wrap {
+    	position: relative;
+    	width: 100%;
+  	}
+
+  	div#foot div.pane div.menu {
+    	padding: 10px 0px;
+    	float: none;
+  	}
+
+  	div#foot div.pane div.side {
+    	position: static;
+    	padding: 0px 50px 10px 0px;
+    	float: none;
+  	}
+
+  	div#foot div.pane div.side small {
+    	float: none;
+  	}
+}

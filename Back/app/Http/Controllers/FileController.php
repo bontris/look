@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Facades\File;
+
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -30,21 +32,25 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-use Intervention\Image\ImageManager;
-
-use Intervention\Image\Drivers\Gd\Driver;
-
-use Intervention\Image\Encoders\PngEncoder;
-
-use Intervention\Image\Encoders\JpegEncoder;
-
-use Intervention\Image\Encoders\AutoEncoder;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class FileController extends Controller
 {
 	public function main (Request $request, $task = null, $item = null) {
         if (isset($item)) {
             switch (strtolower($task)) {
+                case 'save':
+                    if (($item = DB::table('files')
+                                    ->where('files.hide', 0)
+                                    ->where('files.hash', $item)
+                                    ->first())) {
+                        if (file_exists(($path = sprintf('%s/%s', storage_path('files'), $item->hash)))) {
+                            return response(File::get($path))->header('Content-Type', $item->type)
+                                                            ->header('Content-Disposition', sprintf('filename="%s"', $item->name));
+                        }
+                    }
+
+                    return response('File not found.', 404);
                 case 'open':
                     $list = [];
     
@@ -95,14 +101,13 @@ class FileController extends Controller
                         $client->refreshToken(env('API_GOOGLE_TOKEN'));
     
                         $client->addScope(Drive::DRIVE_FILE);
-    
+                        
                         $drive = new Drive($client);
 
                         $data = $drive->files->get($item);
-
-                        return response()->stream(function () use ($item, $drive) {
-                            echo($drive->files->get($item, array('alt' => 'media'))->getBody()->getContents());
-                        }, 200, ['Content-Type' => $data->mimeType, 'Content-Disposition' => sprintf('filename="%s"', $data->name)]);
+                        
+                        return response($drive->files->get($item, array('alt' => 'media'))->getBody()->getContents())->header('Content-Type', $data->mimeType)
+    			                                                                          ->header('Content-Disposition', sprintf('filename="%s"', $data->name));
                     } catch (Exception $exception) {
                         Log::error($exception->getMessage());
 
@@ -154,26 +159,18 @@ class FileController extends Controller
         if (file_exists(($path = sprintf('%s/%s', storage_path('files'), $item)))) {
             switch (strtolower($size)) {
                 case 'thumb':
-                    return response()->stream(function () use ($path) {
-                        echo((new ImageManager(Driver::class))->read($path)->resize(64, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                        })->encode(new PngEncoder(quality: 10)));
-                    }, 200, ['Content-Type' => finfo_file(finfo_open(FILEINFO_MIME_TYPE), $path), 'Content-Disposition' => sprintf('filename="%s"', $item)]);
+                    return Image::make($path)->resize(64, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                    })->response('png');
                 case 'small':
-                    return response()->stream(function () use ($path) {
-                        echo((new ImageManager(Driver::class))->read($path)->resize(680, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                        })->encode(new PngEncoder(quality: 10)));
-                    }, 200, ['Content-Type' => finfo_file(finfo_open(FILEINFO_MIME_TYPE), $path), 'Content-Disposition' => sprintf('filename="%s"', $item)]);
+                    return Image::make($path)->resize(680, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                    })->response('png');
                 default:
-                    return response()->stream(function () use ($path) {
-                        echo((new ImageManager(Driver::class))->read($path)->resize(680, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                        })->encode(new AutoEncoder(quality: 10)));
-                    }, 200, ['Content-Type' => finfo_file(finfo_open(FILEINFO_MIME_TYPE), $path), 'Content-Disposition' => sprintf('filename="%s"', $item)]);
+                    return Image::make($path)->response('png');
             }
         } else {
-            abort(404, 'Image not found.');
+            return response('Image not found.', 404);
         }
     }
 }

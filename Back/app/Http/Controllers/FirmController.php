@@ -32,11 +32,8 @@ class FirmController extends Controller
                 if (($item = DB::table('firms')
                                ->where('hide', 0)
                                ->where('core', 0)
-                                ->where(function ($query) use ($item) {
-                                        $query->where('row', $item)
-                                            ->orWhere('hash', $item);
-                                })
-                                ->first())) {
+                               ->where((preg_match('/^[0-9]+$/', $item) ? 'row' : 'hash'), $item)
+                               ->first())) {
                     switch (strtolower($task)) {
                         case 'save':
                             $validator = Validator::make($request->all(), [
@@ -53,6 +50,9 @@ class FirmController extends Controller
                                 'name' => 'required|max:64',
                                 'note' => 'nullable|max:512',
                                 'work' => 'nullable|max:16',
+                                'bank' => 'nullable|integer|min:0',
+                                'date' => 'nullable|date_format:Y-m-d',
+                                'next' => 'nullable:regex:/^[a-zA-Z0-9]{2,16}$/',
                                 'disk' => 'nullable|regex:/^[\w\-\_]{16,64}$/i',
                                 'mail' => 'required|email|max:64',
                                 'page' => 'nullable|url:http,https|max:128',
@@ -62,6 +62,7 @@ class FirmController extends Controller
                                 'plan.in' => 'El campo no es válido.',
                                 'time.min' => 'El campo no es válido.',
                                 'left.min' => 'El campo no es válido.',
+                                'bank.min' => 'El campo no es válido.',
                                 'icon.max' => 'La imágen no puede pesar más de 5 Mb.',
                                 'code.max' => 'El campo no es válido.',
                                 'card.max' => 'El campo no es válido.',
@@ -73,7 +74,9 @@ class FirmController extends Controller
                                 'note.max' => 'El campo no es válido.',
                                 'page.url' => 'El campo no es válido.',
                                 'disk.regex' => 'El campo no es válido.',
+                                'next.regex' => 'El campo no es válido.',
                                 'mail.email' => 'El campo no es válido.',
+                                'bank.integer' => 'El campo no es válido.',
                                 'time.numeric' => 'El campo no es válido.',
                                 'left.numeric' => 'El campo no es válido.',
                                 'rate.numeric' => 'El campo no es válido.',
@@ -86,6 +89,7 @@ class FirmController extends Controller
                                 'mail.required' => 'El campo es requerido.',
                                 'name.required' => 'El campo es requerido.',
                                 'icon.mimetypes' => 'El campo debe ser una imágen válida.',
+                                'date.date_format' => 'El campo no es válido.',
                                 'time.required_if' => 'El campo es requerido.',
                                 'left.required_if' => 'El campo es requerido.',
                                 'rate.required_if' => 'El campo es requerido.',
@@ -146,6 +150,8 @@ class FirmController extends Controller
                                                         'link' => $link,
                                                         'mark' => date('Y-m-d H:i:s'),
                                                         'icon' => $icon ?? $item->icon,
+                                                        'date' => $request->get('date', $item->date),
+                                                        'next' => trim($request->get('next', $item->next)),
                                                         'card' => trim($request->get('card', $item->card)),
                                                         'work' => trim($request->get('work', $item->work)),
                                                         'mail' => trim($request->get('mail', $item->mail)),
@@ -157,8 +163,9 @@ class FirmController extends Controller
                                                         'lock' => intval($request->get('lock', $item->lock)),
                                                         'type' => intval($request->get('type', $item->type)),
                                                         'plan' => intval($request->get('plan', $item->plan)),
-                                                        'time' => intval($request->get('time', $item->time)),
-                                                        'left' => intval($request->get('left', $item->left)),
+                                                        'time' => floatval($request->get('time', $item->time)),
+                                                        'bank' => intval($request->get('bank', $item->bank)),
+                                                        'left' => floatval($request->get('left', $item->left)),
                                                         'rate' => floatval($request->get('rate', $item->rate)),
                                                         'cost' => floatval($request->get('cost', $item->cost))
                                                     ])) {
@@ -510,7 +517,7 @@ class FirmController extends Controller
                                 $response = $client->request('GET', 'https://tallera.bitrix24.es/rest/1/dvunwnf9osrzgkfp/crm.contact.list.json', [
                                     RequestOptions::QUERY => [
                                         'filter' => ['COMPANY_ID' => $item->link],
-                                        'select' => ['ID', 'PHOTO', 'NAME', 'LAST_NAME'],
+                                        'select' => ['ID', 'PHOTO', 'PHONE', 'NAME', 'EMAIL', 'LAST_NAME'],
                                         'order' => ['NAME' => 'asc', 'LAST_NAME' => 'asc'],
                                         'start' => $next,
                                         'limit' => 50
@@ -524,7 +531,9 @@ class FirmController extends Controller
                                                 'item' => $item['ID'],
                                                 'name' => $item['NAME'],
                                                 'last' => $item['LAST_NAME'],
-                                                'icon' => isset($item['PHOTO']) ? $item['PHOTO'] : null
+                                                'icon' => isset($item['PHOTO']) ? $item['PHOTO'] : null,
+                                                'mail' => isset($item['EMAIL'][0]['VALUE']) ? $item['EMAIL'][0]['VALUE'] : null,
+                                                'work' => isset($item['PHONE'][0]['VALUE']) ? $item['PHONE'][0]['VALUE'] : null,
                                             ]);
                 
                                             return $list;
@@ -585,6 +594,9 @@ class FirmController extends Controller
                             'name' => 'required|max:64',
                             'note' => 'nullable|max:512',
                             'work' => 'nullable|max:16',
+                            'date' => 'nullable|date_format:Y-m-d',
+                            'next' => 'nullable:regex:/^[a-zA-Z0-9]{2,16}$/',
+                            'bank' => 'nullable|integer|min:0',
                             'disk' => 'nullable|regex:/^[\w\-\_]{16,64}$/i',
                             'mail' => 'required|email|max:64',
                             'page' => 'nullable|url:http,https|max:128',
@@ -595,6 +607,7 @@ class FirmController extends Controller
                             'plan.in' => 'El campo no es válido.',
                             'time.min' => 'El campo no es válido.',
                             'left.min' => 'El campo no es válido.',
+                            'bank.min' => 'El campo no es válido.',
                             'icon.max' => 'La imágen no puede pesar más de 5 Mb.',
                             'code.max' => 'El campo no es válido.',
                             'card.max' => 'El campo no es válido.',
@@ -605,8 +618,10 @@ class FirmController extends Controller
                             'head.max' => 'El campo no es válido.',
                             'note.max' => 'El campo no es válido.',
                             'page.url' => 'El campo no es válido.',
+                            'next.regex' => 'El campo no es válido.',
                             'disk.regex' => 'El campo no es válido.',
                             'mail.email' => 'El campo no es válido.',
+                            'bank.integer' => 'El campo no es válido.',
                             'time.numeric' => 'El campo no es válido.',
                             'left.numeric' => 'El campo no es válido.',
                             'rate.numeric' => 'El campo no es válido.',
@@ -619,6 +634,7 @@ class FirmController extends Controller
                             'mail.required' => 'El campo es requerido.',
                             'name.required' => 'El campo es requerido.',
                             'icon.mimetypes' => 'El campo debe ser una imágen válida.',
+                            'date.date_format' => 'El campo no es válido.',
                             'time.required_if' => 'El campo es requerido.',
                             'left.required_if' => 'El campo es requerido.',
                             'rate.required_if' => 'El campo es requerido.',
@@ -688,6 +704,8 @@ class FirmController extends Controller
                                                             'icon' => $icon,
                                                             'link' => $link,
                                                             'made' => date('Y-m-d H:i:s'),
+                                                            'date' => $request->get('date', null),
+                                                            'next' => trim($request->get('next')),
                                                             'card' => trim($request->get('card')),
                                                             'work' => trim($request->get('work')),
                                                             'mail' => trim($request->get('mail')),
@@ -699,8 +717,9 @@ class FirmController extends Controller
                                                             'lock' => intval($request->get('lock')),
                                                             'type' => intval($request->get('type')),
                                                             'plan' => intval($request->get('plan')),
-                                                            'time' => intval($request->get('time')),
-                                                            'left' => intval($request->get('left')),
+                                                            'time' => floatval($request->get('time')),
+                                                            'bank' => intval($request->get('bank')),
+                                                            'left' => floatval($request->get('left')),
                                                             'rate' => floatval($request->get('rate')),
                                                             'cost' => floatval($request->get('cost')),
                                                             'hash' => ($hash = md5(uniqid(rand(), true))),
@@ -847,10 +866,10 @@ class FirmController extends Controller
 
                         return response()->json(['size' => ($size = $query->count()),
                                                  'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                                 'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                                 'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                                 'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                                 'data' => array_reduce($query->skip(($page * $take))
                                                                                ->take(($take ? $take : $size))
-                                                                               ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
+                                                                               ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))), DB::raw(sprintf("(SELECT SUM(`times`.`load`) FROM `times` LEFT JOIN `tasks` ON `times`.`bind` = `tasks`.`row` WHERE `tasks`.`bind` = `firms`.`link` AND (DATE_FORMAT(`times`.`made`, '%%Y-%%m') = '%s')) AS `load`", date('Y-m'))))
                                                                                ->orderBy('made', 'desc')
                                                                                ->get()
                                                                                ->toArray(), function ($list, $item) {
@@ -860,6 +879,7 @@ class FirmController extends Controller
                                 'type' => intval($item->type),
                                 'plan' => intval($item->plan),
                                 'link' => intval($item->link),
+                                'load' => intval($item->load),
                                 'item' => intval($item->row),
                                 'hash' => $item->hash,
                                 'code' => $item->code,

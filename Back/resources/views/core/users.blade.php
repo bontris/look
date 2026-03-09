@@ -1,119 +1,988 @@
-@extends('core')
+@extends('team')
 
 @section('page')
-    <div class="col-xxl-12 col-12">
-        <div class="nftmax-body">
-            <!-- Dashboard Inner -->
-            <div class="nftmax-dsinner">
-                <div class="nftmax-table mg-top-40">
-                    <div class="nftmax-table__heading">
-                        <h3 class="nftmax-table__title mb-0">Usuarios <span class="nftmax-table__badge">@{{ high }}</span></h3>
-                        <ul  class="nav nav-tabs  nftmax-dropdown__list" id="nav-tab" role="tablist">
-                            <li class="nav-item dropdown ">
-                                <a class="nftmax-sidebar_btn nftmax-heading__tabs nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Categorías <span class="nftmax-table__arrow--icon"><svg width="13" height="6" viewBox="0 0 13 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.7" d="M12.4124 0.247421C12.3327 0.169022 12.2379 0.106794 12.1335 0.0643287C12.0291 0.0218632 11.917 0 11.8039 0C11.6908 0 11.5787 0.0218632 11.4743 0.0643287C11.3699 0.106794 11.2751 0.169022 11.1954 0.247421L7.27012 4.07837C7.19045 4.15677 7.09566 4.219 6.99122 4.26146C6.88678 4.30393 6.77476 4.32579 6.66162 4.32579C6.54848 4.32579 6.43646 4.30393 6.33202 4.26146C6.22758 4.219 6.13279 4.15677 6.05312 4.07837L2.12785 0.247421C2.04818 0.169022 1.95338 0.106794 1.84895 0.0643287C1.74451 0.0218632 1.63249 0 1.51935 0C1.40621 0 1.29419 0.0218632 1.18975 0.0643287C1.08531 0.106794 0.990517 0.169022 0.910844 0.247421C0.751218 0.404141 0.661621 0.616141 0.661621 0.837119C0.661621 1.0581 0.751218 1.2701 0.910844 1.42682L4.84468 5.26613C5.32677 5.73605 5.98027 6 6.66162 6C7.34297 6 7.99647 5.73605 8.47856 5.26613L12.4124 1.42682C12.572 1.2701 12.6616 1.0581 12.6616 0.837119C12.6616 0.616141 12.572 0.404141 12.4124 0.247421Z" fill="#374557" fill-opacity="0.6"></path></svg></span></a>
-                                <ul class="dropdown-menu nftmax-sidebar_dropdown">
-                                    <a class="dropdown-item list-group-item" data-bs-toggle="tab" data-bs-target="#table_1" role="tab">Categoría 1</a>
-                                    <a class="dropdown-item list-group-item" data-bs-toggle="tab" data-bs-target="#table_2" role="tab">Categoría 2</a>
-                                    <a class="dropdown-item list-group-item"  data-bs-toggle="tab" data-bs-target="#table_3" role="tab">Categoría 3</a>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="tab-content" id="myTabContent">
-                        <div class="tab-pane fade show active" id="table_1" role="tabpanel" aria-labelledby="table_1">
-                            <!-- NFTMax Table -->
-                            <table id="nftmax-table__main" class="nftmax-table__main nftmax-table__main-v1">
-                                <!-- NFTMax Table Head -->
-                                <thead class="nftmax-table__head">
-                                    <tr>
-                                        <th class="nftmax-table__column-1 nftmax-table__h1">Usuario</th>
-                                        <th class="nftmax-table__column-5 nftmax-table__h5">Correo</th>
-                                        <th class="nftmax-table__column-6 nftmax-table__h6">Último acceso</th>
-                                        <th class="nftmax-table__column-7 nftmax-table__h7">Status</th>
-                                    </tr>
-                                </thead>
-                                <!-- NFTMax Table Body -->
-                                <tbody class="nftmax-table__body">
-                                    <tr v-for="item in list">
-                                        <td class="nftmax-table__column-1 nftmax-table__data-1">
-                                            <div class="nftmax-table__product">
-                                                <div class="nftmax-table__product-img">
-                                                    <img src="/assets/img/nft-table-img1.png" alt="#">
-                                                </div>
-                                                <div class="nftmax-table__product-content">
-                                                    <h4 class="nftmax-table__product-title">@{{ item.name }} @{{ item.last }}</h4>
-                                                    <p class="nftmax-table__product-desc">Código  <a href="#">@{{ item.code }}</a></p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="nftmax-table__column-5 nftmax-table__data-5">
-                                            <p class="nftmax-table__text nftmax-table__bid-text">@{{ item.mail }}</p>
-                                        </td>
-                                        <td class="nftmax-table__column-6 nftmax-table__data-6">
-                                            <p class="nftmax-table__text nftmax-table__time">@{{(item.seen ? date(item.seen, 'DD/MM/YYYY HH:mm') : 'Nunca')}}</p>
-                                        </td>
-                                        <td class="nftmax-table__column-7 nftmax-table__data-7">
-                                            <div class="nftmax-table__status" :class="item.lock ? 'nftmax-sbcolor' : 'nftmax-gbcolor'">@{{ item.lock ? 'Bloqueado' : 'Activo' }}</div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <!-- End NFTMax Table Body -->
-                            </table>
-                            <!-- End NFTMax Table -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End Dashboard Inner -->
-        </div>
-    </div>
+	<v-layout column>
+		<v-row class="ma-0">
+			<v-col class="pa-0">
+				<v-layout class="white px-2">
+					<v-list>
+						<v-list-item class="px-1">
+							<v-list-item-avatar
+                                color="#546E7B"
+                                size="36"
+                                tile>
+								<v-icon color="white">
+									mdi-account
+								</v-icon>
+							</v-list-item-avatar>
+							<v-list-item-content class="pa-0">
+								<v-list-item-title>
+									Usuarios
+								</v-list-item-title>
+								<v-list-item-subtitle>
+									<v-breadcrumbs
+										class="pa-0"
+										:items="[{text: 'Inicio', href: '{{route('dash')}}'}, {text: 'Usuarios'}]">
+									</v-breadcrumbs>
+								</v-list-item-subtitle>
+							</v-list-item-content>
+						</v-list-item>
+					</v-list>
+				</v-layout>
+				<v-divider>
+				</v-divider>
+			</v-col>
+		</v-row>
+		<v-row class="ma-0">
+            <v-col class="ma-0">
+				<v-card outlined>
+					<v-toolbar flat>
+						<v-toolbar-title>
+							<v-sheet v-if="same(view, 1)">
+								<v-list>
+									<v-list-item>
+										<v-list-item-content>
+											<v-list-item-title>
+												LISTADO DE USUARIOS
+											</v-list-item-title>
+										</v-list-item-content>
+									</v-list-item>
+								</v-list>
+							</v-sheet>
+							<v-sheet v-else>
+								<v-list>
+									<v-list-item>
+										<v-list-item-content>
+											<v-list-item-title>
+												@{{pick ? 'EDITAR USUARIO' : 'NUEVO USUARIO'}}
+											</v-list-item-title>
+										</v-list-item-content>
+									</v-list-item>
+								</v-list>
+							</v-sheet>
+						</v-toolbar-title>
+						<v-layout
+							class="mr-2"
+							justify-center
+							align-center>
+                            <v-spacer>	
+                            </v-spacer>
+                            <v-btn
+								v-if="same(view, 1)"
+                                color="primary"
+                                :disabled="wait"
+                                icon>
+                                <v-icon>mdi-download</v-icon>
+                            </v-btn>
+                            <v-btn
+								v-if="same(view, 1)"
+                                color="primary"
+                                @click.stop="open('make')"
+                                :disabled="wait"
+                                icon>
+                                <v-icon>mdi-plus</v-icon>
+                            </v-btn>
+                        </v-layout>
+					</v-toolbar>
+					<v-divider>
+					</v-divider>
+					<v-card-text class="pa-0">
+						<v-sheet v-if="same(view, 1)">
+							<v-text-field
+								prepend-inner-icon="mdi-magnify"
+								background-color="grey lighten-4"
+								autocomplete="off"
+								clear-icon="mdi-close-circle"
+								label="Buscar"
+								v-model="seek"
+								:readonly="wait"
+								hide-details
+								single-line
+								clearable
+								attach
+								solo
+								flat>
+							</v-text-field>
+							<v-divider>
+							</v-divider>
+						</v-sheet>
+						<v-sheet v-if="same(view, 1)">
+							<v-data-table
+								:headers="none(tiny, [
+									{sortable: false},
+									{text: 'Foto', width: 80, align: 'start', sortable: false},
+									{text: 'Código', width: 180, align: 'start', sortable: false},
+									{text: 'Nombre', align: 'start', sortable: false},
+                                    {text: 'Apellidos', align: 'start', sortable: false},
+									{text: 'Correo', align: 'start', sortable: false},
+                                    {text: 'Tipo', width: 180, align: 'center', sortable: false},
+                                    {text: 'Creación', width: 180, align: 'end', sortable: false},
+									{sortable: false}
+								], [
+									{sortable: false},
+									{text: 'Nombre', align: 'start', sortable: false},
+									{sortable: false}
+								])"
+								:items="data.list"
+								:server-items-length="data.size"
+								:footer-props="{
+									showFirstLastPage: true,
+									itemsPerPageOptions: [16, 32, 64],
+									pageText: '{0} - {1} de {2}',
+									firstIcon: 'mdi-page-first',
+									lastIcon: 'mdi-page-last',
+									prevIcon: 'mdi-chevron-left',
+									nextIcon: 'mdi-chevron-right',
+									itemsPerPageText: 'Filas por página'
+								}"
+								:options.sync="page"
+								:loading="true"
+								hide-default-header
+								bordered>
+								<v-progress-linear
+									color="primary"
+									slot="progress"
+									v-show="(wait && (show == false))"
+									indeterminate>
+								</v-progress-linear>
+								<template v-slot:header="{props}">
+									<thead class="v-data-table-header">
+										<th width="40">
+											<v-checkbox
+												:indeterminate="(Boolean(bulk.list.length) && same((bulk.list.length == list.filter(function (item) {return item.lock ? false : true}).length), false))"
+												:input-value="(bulk.list.length ? (bulk.list.length == list.filter(function (item) {return item.lock ? false : true}).length) : false)"
+												@change="$event ? bulk.list = list.filter(function (item) {return item.lock ? false : true}).map(function (item) {return item}) : bulk.list = []">
+											</v-checkbox>
+										</th>
+										<th 
+											scope="col"
+											role="columnheader"
+											:class="`text-${head.align}`"
+											:width="head.width"
+											v-for="head in props.headers"
+											v-if="head.text">
+											<span>@{{head.text.toUpperCase()}}</span>
+										</th>
+										<th width="40">
+											<v-menu
+												v-if="tiny"
+												transition="slide-y-transition"
+												min-width="260"
+												max-width="260"
+												offset-y>
+												<template v-slot:activator="{on, attrs}">
+													<v-btn
+														v-bind="attrs"
+														v-on="on"
+														:disabled="wait"
+														icon>
+														<v-icon>mdi-dots-vertical</v-icon>
+													</v-btn>
+												</template>
+												<v-list>
+													<v-list-item
+														@click="open('edit')"
+														:disabled="bulk.list.length ? false : true">
+														<v-list-item-icon>
+															<v-icon>mdi-pencil</v-icon>
+														</v-list-item-icon>
+														<v-list-item-title>Editar</v-list-item-title>
+													</v-list-item>
+													<v-list-item
+														@click="open('drop')"
+														:disabled="bulk.list.length ? false : true">
+														<v-list-item-icon>
+															<v-icon>mdi-delete</v-icon>
+														</v-list-item-icon>
+														<v-list-item-title>Eliminar</v-list-item-title>
+													</v-list-item>
+												</v-list>
+											</v-menu>
+											<v-layout v-else>
+												<v-spacer>
+												</v-spacer>
+												<v-btn
+													@click="open('edit')"
+													:disabled="bulk.list.length ? false : true"
+													icon>
+													<v-icon>mdi-pencil</v-icon>
+												</v-btn>
+												<v-btn
+													@click="open('drop')"
+													:disabled="bulk.list.length ? false : true"
+													icon>
+													<v-icon>mdi-delete</v-icon>
+												</v-btn>
+											</v-layout>
+										</th>
+									</thead>
+								</template>
+								<template v-slot:item="{item}">
+									<tr>
+										<td>
+											<v-checkbox
+												:disabled="wait"
+												@change="$event ? bulk.list.push(item) : bulk.list.splice(bulk.list.indexOf(item), 1)"
+												:input-value="~bulk.list.indexOf(item)">
+											</v-checkbox>
+										</td>
+										<td>
+                                            <v-list>
+												<v-list-item>
+                                                    <v-list-item-avatar
+                                                        :disabled="wait"
+                                                        :color="none(item.face, `#${item.tone}`, null)"
+                                                        size="36">
+                                                        <label class="c-pointer">
+                                                            <v-img
+                                                                v-if="item.face"
+                                                                :src="`/snaps/${item.face}/thumb`"
+                                                                :width="36"
+                                                                cover>
+                                                            </v-img>
+                                                            <span
+                                                                class="font-weight-bold white--text caption"
+                                                                v-else>
+                                                                @{{item.name.charAt(0).toUpperCase()}}
+                                                            </span>
+                                                            <input class="d-none" type="file" accept="image/*" @change="open('crop', item, $event.target?.files.item(0), 1, true)">
+                                                        </label>
+                                                    </v-list-item-avatar>
+                                                    <v-list-item-content v-if="tiny">
+                                                        <v-list-item-title>
+                                                            @{{item.name}} @{{item.last}}
+                                                        </v-list-item-title>
+                                                        <v-list-item-subtitle>
+                                                            @{{item.code}}
+                                                        </v-list-item-subtitle>
+                                                    </v-list-item-content>
+												</v-list-item>
+											</v-list>
+										</td>
+										<td v-if="none(tiny)">
+											<div class="text--primary">
+												@{{item.code}}
+											</div>
+										</td>
+										<td v-if="none(tiny)">
+											<div class="text--primary">
+												@{{item.name}}
+											</div>
+										</td>
+                                        <td v-if="none(tiny)">
+											<div class="text--primary">
+												@{{item.last}}
+											</div>
+										</td>
+										<td v-if="none(tiny)">
+											<div :class="none(item.mail, 'text--secondary', 'text--primary')">
+                                                @{{none(item.mail, 'Ninguno', item.mail)}}
+											</div>
+										</td>
+                                        <td
+											class="text-center"
+											v-if="none(tiny)">
+											<div class="text--primary">
+												<v-chip
+                                                    text-color="white"
+                                                    :color="{1: '#E53935', 2: '#01579B', 3: '#263238'}[item.type]"
+                                                    small>
+													<v-icon left>
+														@{{({1: 'mdi-account-edit', 2: 'mdi-account-star', 3: 'mdi-account'}[item.type])}}
+													</v-icon>
+													@{{{1: 'Administrador', 2: 'Colaborador', 3: 'Externo'}[item.type]}}
+												</v-chip>
+											</div>
+										</td>
+                                        <td
+											v-if="none(tiny)"
+											class="text-end">
+											<div class="text--primary">
+												@{{date(item.made, 'DD/MM/YYYY hh:mm:ss')}}
+											</div>
+										</td>
+										<td>
+											<v-menu
+												v-if="tiny"
+												transition="slide-y-transition"
+												min-width="260"
+												max-width="260"
+												offset-y
+												left>
+												<template v-slot:activator="{on, attrs}">
+													<v-btn
+														v-bind="attrs"
+														v-on="on"
+														:disabled="wait"
+														icon>
+														<v-icon>mdi-dots-vertical</v-icon>
+													</v-btn>
+												</template>
+												<v-list>
+													<v-list-item
+														:disabled="Boolean(bulk.list.length)"
+														@click="open('lock', item)">
+														<v-list-item-icon>
+															<v-icon>mdi-lock-reset</v-icon>
+														</v-list-item-icon>
+														<v-list-item-title>@{{item.lock ? 'Hablilitar' : 'Bloquear'}}</v-list-item-title>
+													</v-list-item>
+													<v-divider>
+													</v-divider>
+													<v-list-item
+														@click="open('edit', item)">
+														<v-list-item-icon>
+															<v-icon>mdi-pencil</v-icon>
+														</v-list-item-icon>
+														<v-list-item-title>Editar</v-list-item-title>
+													</v-list-item>
+													<v-list-item
+														@click="open('drop', item)">
+														<v-list-item-icon>
+															<v-icon>mdi-delete</v-icon>
+														</v-list-item-icon>
+														<v-list-item-title>Eliminar</v-list-item-title>
+													</v-list-item>
+												</v-list>
+											</v-menu>
+											<v-layout v-else>
+												<v-spacer>
+												</v-spacer>
+												<v-btn
+													:disabled="Boolean(bulk.list.length)"
+													:color="item.lock ? 'red' : 'green'"
+													@click="open('lock', item)"
+													:title="(item.lock ? 'Hablilitar' : 'Bloquear')"
+													icon>
+													<v-icon>mdi-lock-reset</v-icon>
+												</v-btn>
+												<v-btn
+													:disabled="Boolean(bulk.list.length)"
+													@click="open('edit', item)"
+													title="Editar"
+													icon>
+													<v-icon>mdi-pencil</v-icon>
+												</v-btn>
+												<v-btn
+													:disabled="Boolean(bulk.list.length)"
+													@click="open('drop', item)"
+													title="Eliminar"
+													icon>
+													<v-icon>mdi-delete</v-icon>
+												</v-btn>
+											</v-layout>
+										</td>
+									</tr>
+								</template>
+								<template v-slot:loading>
+									<v-sheet v-if="wait">
+										<v-avatar
+											color="grey lighten-1"
+											class="mt-6" 
+											size="64">
+											<v-icon
+												size="42"
+												dark>
+												mdi-download-network
+											</v-icon>
+										</v-avatar>
+										<v-list>
+											<v-list-item>
+												<v-list-item-content>
+													<v-list-item-title>
+														Cargando
+													</v-list-item-title>
+													<v-list-item-subtitle>
+														Por favor espere.
+													</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+										</v-list>
+									</v-sheet>
+									<v-sheet v-else>
+										<v-avatar
+											color="grey lighten-1"
+											class="mt-6" 
+											size="64">
+											<v-icon
+												size="42"
+												dark>
+												mdi-inbox
+											</v-icon>
+										</v-avatar>
+										<v-list>
+											<v-list-item>
+												<v-list-item-content>
+													<v-list-item-title>
+														Sin registros
+													</v-list-item-title>
+													<v-list-item-subtitle>
+														No se encontraron registros.
+													</v-list-item-subtitle>
+												</v-list-item-content>
+											</v-list-item>
+										</v-list>
+									</v-sheet>
+								</template>
+							</v-data-table>
+						</v-sheet>
+						<v-sheet v-else>
+							<v-layout
+								class="mx-4 my-1 mt-4"
+								column>
+								<v-sheet>
+									<v-row dense>
+										<v-col :cols="none(tiny, 6, 12)">
+                                        	<v-select
+												item-value="item"
+												item-text="text"
+												:items="[{item: 1, text: 'Administrador'}, {item: 2, text: 'Colaborador'}, {item: 3, text: 'Externo'}]"
+												v-model="form.type"
+												:error-messages="[fail?.type].filter(Boolean)"
+												label="Tipo"
+												:disabled="wait"
+												hide-details="auto"
+												required
+												filled> 
+											</v-select>
+										</v-col>
+										<v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+												label="Código"
+												autocomplete="off"
+												hide-details="auto"
+												v-model="form.code"
+												:error-messages="[fail?.code].filter(Boolean)"
+												:disabled="wait"
+												:required="none(pick, false, true)"
+												filled>
+											</v-text-field>
+										</v-col>
+									</v-row>
+									<v-row dense>
+										<v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+                                                class="bind"
+												label="Nombre"
+												autocomplete="off"
+												hide-details="auto"
+												v-model="form.name"
+												:error-messages="[fail?.name].filter(Boolean)"
+												:disabled="wait"
+												filled>
+											</v-text-field>
+										</v-col>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+                                                class="bind"
+												label="Apellidos"
+												autocomplete="off"
+												hide-details="auto"
+												v-model="form.last"
+												:error-messages="[fail?.last].filter(Boolean)"
+												:disabled="wait"
+												filled>
+											</v-text-field>
+										</v-col>
+									</v-row>
+									<v-row dense>
+										<v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+												class="bind"
+												label="Teléfono"
+												hide-details="auto"
+												autocomplete="off"
+												v-model="form.work"
+												:error-messages="[fail?.work].filter(Boolean)"
+												:disabled="wait"
+												filled>
+											</v-text-field>
+										</v-col>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+												label="Correo"
+												hide-details="auto"
+												autocomplete="off"
+												v-model="form.mail"
+												:error-messages="[fail?.mail].filter(Boolean)"
+												:disabled="wait"
+												filled>
+											</v-text-field>
+										</v-col>
+									</v-row>
+                                    <v-row dense>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+												label="Usuario"
+												autocomplete="off"
+												hide-details="auto"
+												v-model="form.nick"
+												:error-messages="[fail?.nick].filter(Boolean)"
+												:disabled="wait"
+												filled>
+											</v-text-field>
+										</v-col>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+                                                :type="(form.show ? 'text' : 'password')"
+												label="Contraseña"
+												autocomplete="off"
+												hide-details="auto"
+												v-model="form.pass"
+												:error-messages="[fail?.pass].filter(Boolean)"
+                                                :append-icon="(form.show ? 'mdi-eye' : 'mdi-eye-off')"
+												:disabled="wait"
+                                                @click:append="(form.show = form.show ? false : true)"
+												filled>
+											</v-text-field>
+										</v-col>
+									</v-row>
+									<v-row dense>
+										<v-col :cols="none(tiny, 6, 12)">
+											<v-select
+												item-value="item"
+												item-text="text"
+												:items="[{item: '-05:00', text: 'America / Bogotá'}, {item: '-04:00', text: 'America / Caracas'}, {item: '-03:00', text: 'America / Buenos Aires'}]"
+												v-model="form.time"
+												:error-messages="[fail?.time].filter(Boolean)"
+												label="Zona horaria"
+												:disabled="wait"
+												hide-details="auto"
+												clear-icon="mdi-close-circle"
+												clearable
+												filled> 
+											</v-select>
+										</v-col>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-select
+												item-value="item"
+												:item-text="(item) => (item?.data?.name['ES'] ?? item.name)"
+												:items="pile.text.list"
+												v-model="form.text"
+												:error-messages="[fail?.text].filter(Boolean)"
+												label="Idioma"
+												:disabled="wait"
+												hide-details="auto"
+												clear-icon="mdi-close-circle"
+												clearable
+												filled> 
+											</v-select>
+										</v-col>
+									</v-row>
+                                    <v-row dense>
+										<v-col :cols="none(tiny, 6, 12)">
+											<v-file-input
+												accept="image/jpeg,image/png"
+												label="Fotografía"
+												@change="open('crop', pick, $event, 1, false)"
+                                                clear-icon="mdi-close-circle"
+												prepend-inner-icon="mdi-camera"
+												:error-messages="[fail?.face].filter(Boolean)"
+                                                hide-details="auto"
+												filled>
+											</v-file-input>
+										</v-col>
+                                        <v-col :cols="none(tiny, 6, 12)">
+											<v-text-field
+												type="text"
+												label="Color"
+												autocomplete="off"
+												v-model="form.tone"
+												:error-messages="[fail?.tone].filter(Boolean)"
+												:disabled="wait"
+                                                hide-details="auto"
+												filled>
+											</v-text-field>
+										</v-col>
+									</v-row>
+									<v-row dense>
+										<v-col>
+											<v-textarea
+												label="Nota"
+												maxlength="256"
+												hide-details="auto"
+												autocomplete="off"
+												v-model="form.note"
+												:error-messages="[fail?.note].filter(Boolean)"
+												:value="form.note"
+												:disabled="wait"
+												auto-grow
+												counter
+												filled>
+											</v-textarea>
+										</v-col>
+									</v-row>
+								</v-sheet>
+							</v-layout>
+							<v-layout class="pa-4">
+								<v-spacer>
+								</v-spacer>
+								<v-btn
+									color="secondary"
+									@click="view = 1"
+									:disabled="wait"
+									text
+									tile>
+									Cancelar
+								</v-btn>
+								<v-btn
+									class="white--text ml-6"
+									color="success"
+									@click="save(form, pick)"
+									:disabled="wait"
+									text
+									tile>
+									Guardar
+								</v-btn>
+							</v-layout>
+						</v-sheet>
+					</v-card-text>
+				</v-card>
+			</v-col>
+		</v-row>
+	</v-layout>
+
+    <v-dialog
+		v-model="show.crop"
+		:width="none(tiny, 768, '100%')"
+		persistent
+		scrollable
+		outlined
+		tile>
+		<v-card>
+            <v-card-title class="pa-0">
+				<v-list>
+					<v-list-item>
+						<v-list-item-avatar>
+							<v-icon
+                                class="grey lighten-4"
+                                tile>
+								mdi-image-edit
+							</v-icon>
+						</v-list-item-avatar>
+						<v-list-item-content>
+							<v-list-item-title class="text-uppercase">
+                                Imágen
+							</v-list-item-title>
+							<v-list-item-subtitle>
+                                Editar imágen seleccionada.
+							</v-list-item-subtitle>
+						</v-list-item-content>
+                        <v-list-item-action v-if="tiny">
+                            <v-btn
+                                @click="(show.crop = false)"
+                                :disabled="wait"
+                                icon>
+					            <v-icon>mdi-close</v-icon>
+				            </v-btn>
+                        </v-list-item-action>
+					</v-list-item>
+				</v-list>
+            </v-card-title>
+          	<v-divider>
+            </v-divider>
+			<v-card-text class="px-4 py-4">
+				<v-row dense>
+        			<v-col>
+        				<v-crop
+							ref="snap"
+							:boot="boot"
+							:ratio="({1: 1.1, 2: 1.6}[show.type] ?? 1)">
+						</v-crop>
+        			</v-col>
+        		</v-row>
+			</v-card-text>
+			<v-divider>
+			</v-divider>
+			<v-card-actions class="grey lighten-4">
+				<v-btn
+					class="mr-2"
+					color="blue"
+					@click="snap.zoom(0.1)"
+                    :disabled="wait"
+					icon>
+					<v-icon>mdi-magnify-plus</v-icon>
+				</v-btn>
+				<v-btn
+					color="blue"
+					@click="snap.zoom(-0.1)"
+                    :disabled="wait"
+					icon>
+					<v-icon>mdi-magnify-minus</v-icon>
+				</v-btn>
+				<v-btn
+					class="mr-2"
+					color="blue"
+					@click="snap.rotate(90)"
+                    :disabled="wait"
+					icon>
+					<v-icon>mdi-rotate-right</v-icon>
+				</v-btn>
+				<v-btn
+					color="blue"
+					@click="snap.rotate(-90)"
+                    :disabled="wait"
+					icon>
+					<v-icon>mdi-rotate-left</v-icon>
+				</v-btn>
+				<v-spacer>
+				</v-spacer>
+				<v-btn
+                    v-if="none(tiny)"
+					color="secondary"
+					@click="(show.crop = false)"
+					:disabled="wait"
+					tile
+					text>
+					Cancelar
+				</v-btn>
+				<v-btn
+					color="success"
+					@click="shot(pick, snap, show.type, show.post)"
+					:disabled="wait"
+                    :icon="none(tiny, false, true)"
+                    :tile="none(tiny)"
+					:text="none(tiny)">
+                    <template v-if="tiny">
+                        <v-icon>mdi-check<v-icon>
+                    </template>
+                    <template v-else>
+                        Guardar
+                    </template>
+				</v-btn>
+			</v-card-actions>
+		</v-card>
+	</v-dialog>
+
+    <v-dialog
+        v-model="show.wipe"
+        :width="none(tiny, 640, '100%')"
+        persistent
+        outlined
+        tile>
+        <v-card>
+            <v-card-title class="pa-0">
+				<v-list>
+					<v-list-item>
+						<v-list-item-avatar>
+							<v-icon
+                                class="grey lighten-4"
+                                tile>
+								mdi-image-remove
+							</v-icon>
+						</v-list-item-avatar>
+						<v-list-item-content>
+							<v-list-item-title class="text-uppercase">
+                                Imágen
+							</v-list-item-title>
+							<v-list-item-subtitle>
+                                Eliminar la imágen del trabajador.
+							</v-list-item-subtitle>
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
+            </v-card-title>
+          	<v-divider>
+            </v-divider>
+          	<v-card-text class="mt-4">
+          		¿Desea eliminar la imágen del trabajador <b>@{{pick?.name}} @{{pick?.last}} / @{{pick?.code}}</b>?
+          	</v-card-text>
+          	<v-card-actions>
+            	<v-spacer>
+                </v-spacer>
+            	<v-btn
+                    color="secondary" 
+                    @click="(show.wipe = false)"
+                    :disabled="wait"
+                    text>
+                    Cancelar
+                </v-btn>
+            	<v-btn
+                    class="mr-2"
+                    color="red"
+                    @click="face(pick)"
+                    :disabled="wait"
+                    text>
+                    Eliminar
+                </v-btn>
+          	</v-card-actions>
+        </v-card>
+	</v-dialog>
+
+	<v-dialog
+        v-model="show.drop"
+        :width="none(tiny, 640, '100%')"
+        persistent
+        outlined
+        tile>
+        <v-card>
+            <v-card-title class="pa-0">
+				<v-list>
+					<v-list-item>
+						<v-list-item-avatar>
+							<v-icon
+                                class="grey lighten-4"
+                                tile>
+								mdi-delete
+							</v-icon>
+						</v-list-item-avatar>
+						<v-list-item-content>
+							<v-list-item-title class="text-uppercase">
+                                Eliminar
+							</v-list-item-title>
+							<v-list-item-subtitle>
+                                Eliminar el trabajador permanentemente.
+							</v-list-item-subtitle>
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
+            </v-card-title>
+          	<v-divider>
+            </v-divider>
+          	<v-card-text class="mt-4">
+          		¿Desea eliminar el trabajador <b>@{{pick?.name}} @{{pick?.last}} / @{{pick?.code}}</b>?
+          	</v-card-text>
+          	<v-card-actions>
+            	<v-spacer>
+                </v-spacer>
+            	<v-btn
+                    color="secondary" 
+                    @click="(show.drop = false)"
+                    :disabled="wait"
+                    text>
+                    Cancelar
+                </v-btn>
+            	<v-btn
+                    class="mr-2"
+                    color="red"
+                    @click="drop(pick)"
+                    :disabled="wait"
+                    text>
+                    Eliminar
+                </v-btn>
+          	</v-card-actions>
+        </v-card>
+	</v-dialog>
+
+	<v-dialog
+        v-model="show.lock"
+        :width="none(tiny, 640, '100%')"
+        persistent
+        outlined
+        tile>
+        <v-card>
+            <v-card-title class="pa-0">
+				<v-list>
+					<v-list-item>
+						<v-list-item-avatar>
+							<v-icon
+                                class="grey lighten-4"
+                                tile>
+                                mdi-lock-reset
+							</v-icon>
+						</v-list-item-avatar>
+						<v-list-item-content>
+							<v-list-item-title class="text-uppercase">
+                                @{{same(pick?.lock, 1, 'Habilitar', 'Bloquear')}}
+							</v-list-item-title>
+							<v-list-item-subtitle>
+                                Cambiar el estado del trabajador.
+							</v-list-item-subtitle>
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
+            </v-card-title>
+            <v-divider>
+            </v-divider>
+            <v-card-text class="mt-4">
+                <template v-if="same(pick?.lock, 1)">
+                    ¿Desea habilitar el trabajador <b>@{{pick?.name}} @{{pick?.last}} / @{{pick?.code}}</b>?
+                </template>
+            	<template v-else>
+                    ¿Desea bloquear el trabajador <b>@{{pick?.name}} @{{pick?.last}} / @{{pick?.code}}</b>?
+                </template>
+            </v-card-text>
+            <v-card-actions>
+                <v-spacer>
+                </v-spacer>
+                <v-btn
+                    color="secondary"
+                    @click="(show.lock = false)"
+                    :disabled="wait"
+                    text>
+                    Cancelar
+                </v-btn>
+                <v-btn
+                    class="mr-2"
+                    :color="same(pick?.lock, 1, 'success', 'error')" 
+                    @click="lock(pick, same(pick?.lock, 1, 0, 1))"
+                    :disabled="wait"
+                    text>
+                    @{{same(pick?.lock, 1, 'Habilitar', 'Bloquear')}}
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+	</v-dialog>
 @stop
 
 @section('code')
     <script type="text/javascript">
-  		Vue.ready(function () {
+  		Vue.ready(() => {
+			var plat = null;
+
   			var self = new Vue({
 			  	vuetify: new Vuetify(),
-				el: '#body',
-			  	data: {
+				el: '#page',
+			  	data: () => ({
+					seek: {!!json_encode($seek)!!},
 			  		wait: false,
 			  		menu: false,
 			  		snap: null,
 			  		pick: null,
-			  		sync: null,
+                    fail: null,
 					view: 1,
-			  		take: 32,
-			  		high: 0,
-			  		page: 0,
-			  		list: [],
+                    page: {
+			  			page: 1,
+			  			itemsPerPage: 32
+			  		},
 					pile: {
-						role: {
+                        lead: {
 							wait: false,
 							text: null,
 							list: []
+						},
+						shop: {
+							wait: false,
+							list: null
+						},
+						text: {
+							wait: false,
+							text: null,
+							list: null
 						}
 					},
 			  		data: {
+                        take: 32,
+                        size: 0,
 			  			page: 0,
-			  			itemsPerPage: 32
+                        list: []
 			  		},
 			  		show: {
+                        post: false,
+                        spot: false,
 			  			form: false,
 			  			view: false,
-			  			mail: false,
 			  			crop: false,
-			  			pass: false,
 			  			wipe: false,
 			  			lock: false,
-			  			drop: false
-			  		},
-			  		fail: {
-			  			text: null,
-			  		    list: {}
-			  		},
-			  		sort: {
-			  			text: null,
-			  			type: null
+			  			drop: false,
+						type: null
 			  		},
 					bulk: {
 						show: false,
@@ -123,104 +992,88 @@
 						}
 					},
 			  		form: {
+                        show: null,
 			  			lock: null,
-			  			test: null,
-			  			type: null,
-			  			code: null,
-			  			nick: null,
+                        test: null,
+						type: null,
+                        role: null,
+						time: null,
+						text: null,
+                        face: null,
+                        last: null,
 			  			name: null,
-			  			last: null,
-			  			cell: null,
+			  			work: null,
 			  			mail: null,
-			  			pass: null,
-			  			note: null,
-			  			show: null
+                        nick: null,
+                        pass: null,
+			  			note: null
 			  		}
-			    },
+			    }),
 			    watch: {
-					'pile.role.text': (text) => {
-						if (self.pile.role.time) {
-							clearTimeout(self.pile.role.time);
-						}
+					seek: {
+						handler: (data) => {
+							if (self.time) {
+								clearTimeout(self.time);
+							}
 
-						
-					},
-			    	sort: {
-			    		handler: function (sort) {
-			    		   	if (self.time) {
-				    			clearTimeout(self.time);
-				    		}
-
-				    		self.time = setTimeout(function () {
-				    			self.load(self.take, null, sort.text, sort.type);
-				    		}, 500);
-					    },
-					    deep: true
+							self.time = setTimeout(() => {
+								self.load(self.take, null, data);
+							}, 500);
+					    }
 			    	},
-			    	data: {
-			    		handler: function (data) {
-			    		   self.load((self.take = data.itemsPerPage), (self.page = data.page), self.sort.text, self.sort.type);
+			    	page: {
+			    		handler: (data) => {
+			    		   self.load((self.data.take = data.itemsPerPage), (self.data.page = data.page), self.seek);
 					    },
 					    deep: true
 			    	}
 			    },
 			    methods: {
-			    	load: function (take, page, text, type, done) {
-			    		axios.get("{{route('users', ['task' => 'load'])}}?take=" + (take || '') + '&page=' + (page || '') +
-			    			                                                                           '&find=' + (text || '') +
-			    			                                                                           '&type=' + (type || ''), {})
-				             .then(function (data) {
-				            self.list = data.data.data || [];
+			    	load: (take, page, seek) => {
+			    		axios.get(`{{route('core.users', ['task' => 'load'])}}?take=${take ?? ''}&page=${page ?? ''}&seek=${seek ?? ''}`, {})
+				             .then((data) => {
+				            self.data.list = data.data.list ?? [];
 
-				            self.high = data.data.high || 0;
+				            self.data.size = data.data.size ?? 0;
 
-				            self.page = data.data.page || 0;
+				            self.data.page = data.data.page ?? 0;
 
-				            self.take = data.data.take || 0;
+				            self.data.take = data.data.take ?? 0;
 
 				            self.wait = false;
-
-				            if (done) {
-				            	done(false);
-				            }
-				        }).catch(function (fail) {
+				        }).catch((fail) => {
 				            self.wait = false;
-
-				            if (done) {
-				            	done(true);
-				            }
 				        });
 
 				        this.wait = true;
 			    	},
-			    	open: function (task, item, data) {
-			    		self.note = {show: false,
-	                                 type: null,
-	                                 text: null};
-
-			    		self.fail = {text: null,
-			    			         list: {}};
-
+			    	open: (task, item, data, type, post) => {
 			    		if (item) {
 			    			switch (task) {
 			    				case 'edit':
-			    				    axios.get(`{{route('users', ['task' => 'load'])}}/${item.hash}`, {})
-							             .then(function (data) {
-							            self.form = {lock: data.data.lock,
-							            	         test: data.data.test,
-													 role: data.data.role,
-					             			         code: data.data.code,
-					             			         nick: data.data.nick,
-					             			         last: data.data.last,
-			             			    	         name: data.data.name,
-			             			    	         cell: data.data.cell,
-			             			    	         mail: data.data.mail,
-			             			    	         note: data.data.note,
-			             			    	         show: false,
-			             			    	         pass: null};
+			    				    axios.get(`{{route('core.users', ['task' => 'load'])}}/${item.hash}`, {})
+							             .then((data) => {
+							            self.form = {
+                                            show: null,
+                                            pass: null,
+                                            face: null,
+                                            lock: data.data.lock,
+											test: data.data.test,
+											type: data.data.type,
+                                            role: data.data.role,
+											time: data.data.time,
+											text: data.data.text,
+                                            code: data.data.code,
+                                            last: data.data.last,
+                                            name: data.data.name,
+                                            work: data.data.work,
+                                            mail: data.data.mail,
+                                            nick: data.data.nick,
+                                            note: data.data.note
+                                        };
 
 										if (self.wait) {
-											setTimeout(function () {
+											setTimeout(() => {
 												self.wait = false;
 											}, 200);
 										} else {
@@ -228,45 +1081,61 @@
 										}
 
 										self.view = 2;
-							        }).catch(function (fail) {
+							        }).catch((fail) => {
 							            self.wait = false;
 
 							            if (fail.response?.data?.text) {
-			                            	self.note = {show: true,
-			                            	             type: 'fail',
-			                            	             text: fail.response.data.text};
+			                            	self.note = {
+                                                show: true,
+			                            	    type: 'fail',
+			                            	    text: fail.response.data.text
+                                            };
 			                            } else {
-			                            	self.note = {show: true,
-			                            	             type: 'fail',
-			                            	             text: 'Se presentó un error inesperado.'};
+			                            	self.note = {
+                                                show: true,
+			                            	    type: 'fail',
+			                            	    text: 'Se presentó un error inesperado.'
+                                            };
 			                            }
 							        });
 
-									self.time = setTimeout(function () {
+									self.time = setTimeout(() => {
 										self.wait = true;
 									}, 100);
 
 							        self.pick = item;
 			    					break;
 			    				case 'crop':
-			    				    var file = data.files.item(0);
+			    				    if (data) {
+										var file = new FileReader();
 
-			    					if (file.type.match('image.*')) {
-										var reader = new FileReader();
-
-										reader.onload = function(event) {
+										file.onload = (event) => {
 											self.file = event.target.result;
+
+											self.show.post = post;
+
+											self.show.type = type;
 
 											self.show.crop = true;
 
 											self.pick = item;
 
-											if (self.snap) {
-												self.snap.replace(self.file, false);
-											}
+											self.snap.replace(self.file, false);
 										};
 
-										reader.readAsDataURL(file);
+										file.readAsDataURL(data);
+
+										switch (type) {
+											default:
+												self.form.face = data;
+												break;
+										}
+									} else {
+										switch (type) {
+											default:
+												self.form.face = null;
+												break;
+										}
 									}
 			    					break
 			    				case 'wipe':
@@ -293,18 +1162,24 @@
 			    		} else {
 			    			switch (task) {
 			    				case 'make':
-			    					self.form = {lock: 0,
-			    						         test: 0,
-			    						         role: 0,
-			    						         code: null,
-									  			 nick: null,
-									  			 pass: null,
-									  			 last: null,
-									  			 name: null,
-									  			 cell: null,
-									  			 mail: null,
-									  			 note: null,
-									  			 show: false};
+			    					self.form = {
+                                        lock: 0,
+                                        test: 0,
+										type: 0,
+										text: 0,
+                                        show: null,
+                                        role: null,
+										time: null,
+										code: null,
+                                        face: null,
+                                        last: null,
+                                        name: null,
+                                        work: null,
+                                        mail: null,
+                                        nick: null,
+                                        pass: null,
+                                        note: null
+                                    };
 
 					             	self.pick = null;
 
@@ -313,223 +1188,318 @@
 			    			}
 			    		}
 			    	},
-			    	save: function (form, item) {
+			    	save: (form, item) => {
                         var data = new FormData();
 
-                        self.fail = {text: null,
-			    			         list: {}};
+		    		    data.append('lock', form.lock ?? 0);
 
-		    		    data.append('lock', (form.lock ? 1 : 0));
+						data.append('test', form.test ?? 0);
 
-		    		    data.append('test', (form.test ? 1 : 0));
+						data.append('type', form.type ?? 0);
 
-		    		    data.append('type', (form.type || 0));
+                        data.append('role', form.role ?? 0);
 
-		    		    data.append('code', (form.code || ''));
+						data.append('code', form.code ?? '');
 
-		    		    data.append('nick', (form.nick || ''));
+						data.append('text', form.text ?? '');
 
-		    		    data.append('pass', (form.pass || ''));
+						data.append('time', form.time ?? '');
 
-		    		    data.append('last', (form.last || ''));
+                        data.append('pass', form.pass ?? '');
 
-		    		    data.append('name', (form.name || ''));
+                        data.append('tone', form.tone ?? '');
 
-		    	        data.append('cell', (form.cell || ''));
+						data.append('face', form.face ?? '');
 
-		    	        data.append('mail', (form.mail || ''));
+                        data.append('last', form.last ?? '');
 
-		    	        data.append('note', (form.note || ''));
+		    		    data.append('name', form.name ?? '');
+
+		    	        data.append('work', form.work ?? '');
+
+		    	        data.append('mail', form.mail ?? '');
+
+                        data.append('nick', form.nick ?? '');
+
+		    	        data.append('note', form.note ?? '');
+
+                        self.fail =  null;
 
 		    	        if (item) {
-				    		axios.post("{{route('users', ['task' => 'save'])}}/" + item.hash, data, {'X-CSRF-TOKEN': '{{csrf_token()}}'})
-	                             .then(function (data) {
-								self.view = 1;
+				    		axios.post(`{{route('core.users', ['task' => 'save'])}}/${item.hash}`, data, {'X-CSRF-TOKEN': '{{csrf_token()}}'})
+	                             .then((data) => {
+                                item.face = data.data.face ?? form.face;
 
-	                            self.wait = false;
-								
-	                            self.note = {show: true,
-                                	         type: 'done',
-                                	         text: data.data.text};
+                                item.test = form.test;
 
-                                item.type = form.type;
-
-                                item.code = form.code;
-
-                                item.nick = form.nick;
-
-                                item.last = form.last;
+                                item.role = form.role;
 
                                 item.name = form.name;
 
-				    	        item.cell = form.cell;
+                                item.last = form.last;
 
 				    	        item.mail = form.mail;
 
-				    	        item.note = form.note;
-	                        })
-	                        .catch(function (fail) {
+                                item.work = form.work;
+
+                                item.nick = form.nick;
+
 	                            self.wait = false;
 
-	                            if (fail.response.data.text) {
-	                            	self.fail = {text: fail.response.data.text,
-	                            		         list: fail.response.data.list || {}};
+                                self.view = 1;
+								
+	                            self.note = {
+                                    show: true,
+                                	type: 'done',
+                                	text: data.data.text
+                                };
+	                        })
+	                        .catch((fail) => {
+	                            if (fail.response?.data?.text) {
+                                    self.note = {
+                                        show: true,
+                                        type: 'fail',
+                                        text: fail.response.data.text
+                                    };
+
+	                            	self.fail = fail.response.data.list ?? {};
 	                            } else {
-	                            	self.fail.text = 'Se presentó un error inesperado.';
+                                    self.note = {
+                                        show: true,
+                                        type: 'fail',
+                                        text: 'Se presentó un error inesperado.'
+                                    };
 	                            }
+
+                                self.wait = false;
 	                        });
 				    	} else {
-				    		axios.post("{{route('users', ['task' => 'make'])}}", data, {headers: {'X-CSRF-TOKEN': '{{csrf_token()}}'}})
-	                             .then(function (data) {
-	                            self.list.unshift((item = {item: data.data.item,
-                                	                       hash: data.data.hash,
-                                	                       code: data.data.code,
-                                	                       tone: data.data.tone,
-                                	                       face: data.data.face,
-                            		                       lock: form.lock,
-                            		                       type: form.type,
-                            		                       nick: form.nick,
-                            		                       last: form.last,
-                            		                       name: form.name,
-                            		                       mail: form.mail,
-                            		                       seen: null}));
+				    		axios.post("{{route('core.users', ['task' => 'make'])}}", data, {headers: {'X-CSRF-TOKEN': '{{csrf_token()}}'}})
+	                             .then((data) => {
+	                            self.data.list.unshift((item = {
+                                    item: data.data.item,
+                                    hash: data.data.hash,
+                                    code: data.data.code,
+                                    tone: data.data.tone,
+                                    face: data.data.face,
+                                    lock: form.lock,
+                                    test: form.test,
+                                    role: form.role,
+                                    name: form.name,
+                                    last: form.last,
+                                    mail: form.mail,
+                                    work: form.work,
+                                    nick: form.nick
+                                }));
 
-                                self.note = {show: true,
-                                	         type: 'done',
-                                	         text: data.data.text};
+                                self.note = {
+                                    show: true,
+                                	type: 'done',
+                                	text: data.data.text
+                                };
 
                                 self.wait = false;
 
 								self.view = 1;
 	                        })
-	                        .catch(function (fail) {
+	                        .catch((fail) => {
 	                            self.wait = false;
 
-	                            if (fail.response.data.text) {
-	                            	self.fail = {text: fail.response.data.text,
-	                            		         list: fail.response.data.list || {}};
+	                            if (fail.response?.data?.text) {
+                                    self.note = {
+                                        show: true,
+                                        type: 'fail',
+                                        text: fail.response.data.text
+                                    };
+
+	                            	self.fail = fail.response.data.list ?? {};
 	                            } else {
-	                            	self.fail.text = 'Se presentó un error inesperado.';
+                                    self.note = {
+                                        show: true,
+                                        type: 'fail',
+                                        text: 'Se presentó un error inesperado.'
+                                    };
 	                            }
 	                        });
 				    	}
 
 				    	self.wait = true;
 			    	},
-			    	face: function (item, snap) {
-			    		var data = new FormData();
+                    shot: (item, snap, type, post) => {
+						if (post) {
+							var data = new FormData();
 
-						if (snap) {
-							data.append('file', self.blob(snap.getCroppedCanvas({width: 640, height: 640})));
+							data.append('file', ((type, snap) => {
+								switch (type) {
+									default:
+										return self.blob(snap.getCroppedCanvas({width: 64, height: 64}));
+								}
+							})(type, snap));
+
+							axios.post(`{{route('core.users')}}/$@{{1: 'face', 2: 'back'}[type]}/${item.hash}`, data, {headers: {'X-CSRF-TOKEN': '{{csrf_token()}}'}})
+								.then((data) => {
+								switch (type) {
+									default:
+										item.face = data.data.file;
+										break;
+								}
+
+								self.show.crop = false;
+
+								self.wait = false;
+
+								self.note = {
+									show: true,
+									type: 'done',
+									text: data.data.text
+								};
+							})
+							.catch((fail) => {
+								self.show.wipe = false;
+
+								self.wait = false;
+
+								if (fail.response?.data?.text) {
+									self.note = {
+										show: true,
+										type: 'fail',
+										text: fail.response.data.text
+									};
+								} else {
+									self.note = {
+										show: true,
+										type: 'fail',
+										text: 'Se presentó un error inesperado.'
+									};
+								}
+							});
+
+							self.wait = true;
+						} else {
+							self.show.crop = false;
+
+							switch (type) {
+								default:
+									self.form.face = self.blob(snap.getCroppedCanvas({width: 64, height: 64}));
+									break;
+							}
 						}
-
-			    		axios.post("{{route('users', ['task' => 'face'])}}/" + item.hash, data, {headers: {'X-CSRF-TOKEN': '{{csrf_token()}}'}})
-                             .then(function (data) {
-                            item.face = data.data.file;
-
-                            self.note = {show: true,
-                            	         type: 'done',
-                            	         text: data.data.text};
-                            
-                            self.show.crop = false;
-
-                            self.show.wipe = false;
-
-                            self.wait = false;
-                        })
-                        .catch(function (fail) {
-                            self.wait = false;
-
-                            if (fail.response.data.text) {
-                            	self.fail = {text: fail.response.data.text,
-                            		         list: fail.response.data.list || {}};
-                            } else {
-                            	self.fail.text = 'Se presentó un error inesperado.';
-                            }
-                        });
-
-                        self.wait = true;
 			    	},
-			    	lock: function (item, wait) {
-			    		axios.get("{{route('users')}}/" + (wait ? 'wait' : 'lock') + '/' + item.hash, {})
-				             .then(function (data) {
+			    	lock: (item, flag) => {
+			    		axios.get(`{{route('core.users', ['task' => 'lock'])}}/${item.hash}?flag=${flag}`, {})
+				             .then((data) => {
+                            self.show.lock = false;
+
+                            self.show.wait = false;
+
+                            self.wait = false;
+
+                            item.lock = flag;
+
+                            self.note = {
+                                show: true,
+                                type: 'done',
+                                text: data.data.text
+                            };
+				        }).catch((fail) => {
 				            self.wait = false;
 
 				            self.show.lock = false;
 
 				            self.show.wait = false;
 
-				            item.wait = wait ? null :
-				                               item.wait;
-
-			             	item.lock = wait ? item.lock :
-			             	                   data.data.lock;
-
-		             		self.note = {show: true,
-                            	         type: 'done',
-                            	         text: data.data.text};
-				        }).catch(function (fail) {
-				            self.wait = false;
-
-				            self.show.lock = false;
-
-				            self.show.wait = false;
-
-				            if (fail.response.data.text) {
-                            	self.note = {show: true,
-                            	             type: 'fail',
-                            	             text: fail.response.data.text};
+				            if (fail.response?.data?.text) {
+                            	self.note = {
+                                    show: true,
+                            	    type: 'fail',
+                            	    text: fail.response.data.text
+                                };
                             } else {
-                            	self.note = {show: true,
-                            	             type: 'fail',
-                            	             text: 'Se presentó un error inesperado.'};
+                            	self.note = {
+                                    show: true,
+                            	    type: 'fail',
+                            	    text: 'Se presentó un error inesperado.'
+                                };
                             }
 				        });
 
 				        self.wait = true;
 			    	},
-			    	drop: function (item) {
-			    		axios.get("{{route('users', ['task' => 'drop'])}}/" + item.hash, {})
-				             .then(function (data) {
+			    	drop: (item) => {
+			    		axios.get(`{{route('core.users', ['task' => 'drop'])}}/${item.hash}`, {})
+				             .then((data) => {
+                            self.wait = false;
+
+                            self.show.drop = false;
+
+                            self.data.list.splice(self.data.list.indexOf(item), 1);
+
+                            self.note = {
+                                show: true,
+                                type: 'done',
+                                text: data.data.text
+                            };
+				        }).catch((fail) => {
 				            self.wait = false;
 
 				            self.show.drop = false;
 
-			             	self.list.splice(self.list.indexOf(item), 1);
-
-		             		self.note = {show: true,
-                            	         type: 'done',
-                            	         text: data.data.text};
-				        }).catch(function (fail) {
-				            self.wait = false;
-
-				            self.show.drop = false;
-
-				            if (fail.response.data.text) {
-                            	self.note = {show: true,
-                            	             type: 'fail',
-                            	             text: fail.response.data.text};
+				            if (fail.response?.data?.text) {
+                            	self.note = {
+                                    show: true,
+                            	    type: 'fail',
+                            	    text: fail.response.data.text
+                                };
                             } else {
-                            	self.note = {show: true,
-                            	             type: 'fail',
-                            	             text: 'Se presentó un error inesperado.'};
+                            	self.note = {
+                                    show: true,
+                            	    type: 'fail',
+                            	    text: 'Se presentó un error inesperado.'
+                                };
                             }
 				        });
 
 				        this.wait = true;
 			    	},
-			    	boot: function(data) {
+			    	boot: (data) => {
 						self.snap = data;
 
 						self.snap.replace(self.file, false);
 					}
 			    },
-			    mounted: function () {
-			    	this.load(this.take, this.page, this.sort.text, this.sort.type, function (fail) {
-	             		setTimeout(function () {
-	             			self.done = true;
-	             		}, 500);
-	             	});
+			    mounted: () => {
+                    setTimeout(() => {
+                        axios.get(`{{route('core.leads', ['task' => 'pull', 'sort' => 2])}}`)
+							.then((data) => {
+							self.pile.lead.list = data.data.list;
+
+							self.pile.lead.wait = false;
+						}).catch((fail) => {
+							self.pile.lead.wait = false;
+						});
+
+						axios.get(`{{route('core.users', ['task' => 'pull'])}}`)
+							.then((data) => {
+							self.pile.shop.list = data.data.list;
+
+							self.pile.shop.wait = false;
+						}).catch((fail) => {
+							self.pile.shop.wait = false;
+						});
+
+						axios.get(`{{route('core.chips', ['task' => 'pull', 'type' => 1])}}`)
+							.then((data) => {
+							self.pile.text.list = data.data.list;
+
+							self.pile.text.wait = false;
+						}).catch((fail) => {
+							self.text.hand.wait = false;
+						});
+
+						self.pile.text.wait = true;
+
+	             		self.done = true;
+	             	}, 500);
 			    }
 			})
   		});

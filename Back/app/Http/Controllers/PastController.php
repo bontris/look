@@ -34,6 +34,32 @@ class PastController extends Controller
                              ->where('type', $type)
                              ->first())) {
     			switch (strtolower(trim($task))) {
+                    case 'dump':
+                        $client = new Client(['headers' => [
+                            'Authorization' => env('API_AUCO_PUBLIC')]]
+                        );
+                        
+                        $response = $client->request('GET', sprintf('%s/%s?code=%s', env('API_AUCO_ENVIRONMENT'), 'validate/background', trim($item->data->code)), [
+                            'http_errors' => false
+                        ]);
+
+                        if (($response->getStatusCode() == 200)) {
+                            if (($data = json_decode($response->getBody(), true))) {
+                                return response()->json([
+                                    'link' => isset($data['url']) ? $data['url'] : null,
+                                    'done' => boolval($data['ready']),
+                                    'data' => $data['data']
+                                ], 200);
+                            } else {
+                                return response()->json([
+                                    'text' => 'No se pudo obtener la información del registro.'
+                                ], 500);
+                            }
+                        } else {
+                            return response()->json(['body'=>$response->getBody(),
+                                'text' => 'No se pudo obtener la información del registro.'
+                            ], 404);
+                        }
 			        case 'lock':
 			        	if (DB::table('pasts')
 			                  ->where('row', $item->row)
@@ -72,7 +98,7 @@ class PastController extends Controller
                     set_time_limit(0);
 
                     switch (strtolower(trim($type))) {
-                        case 3:
+                        case 2:
                             $validator = Validator::make($request->all(), [
                                 'card' => 'required|max:16',
                             ], [
@@ -82,80 +108,16 @@ class PastController extends Controller
         
                             if (empty($validator->fails())) {
                                 $client = new Client(['headers' => [
-                                    'Authorization' => env('API_AUCO_PUBLIC')]]
-                                );
-                                
-                                $response = $client->request('GET', sprintf('%s/%s?nit=%s', env('API_AUCO_ENVIRONMENT'), 'validate/company/representatives', trim($request->get('card'))), [
-                                    'http_errors' => false
-                                ]);
-        
-                                if (($response->getStatusCode() == 200)) {
-                                    if (($data = json_decode($response->getBody(), true))) {
-                                        if (($item = DB::table('pasts')->insertGetId([
-                                            'type' => 3,
-                                            'cost' => 10000,
-                                            'skip' => Auth::user()->id,
-                                            'data' => json_encode($data),
-                                            'date' => date('Y-m-d H:i:s'),
-                                            'code' => ($code = hexdec(uniqid())),
-                                            'card' => trim($request->get('card')),
-                                            'bind' => Auth::user()->firm->row,
-                                            'hash' => ($hash = md5(uniqid(rand(), true)))
-                                        ]))) {
-                                            return response()->json([
-                                                'item' => $item,
-                                                'hash' => $hash,
-                                                'code' => $code,
-                                                'data' => $data
-                                            ], 200);
-                                        } else {
-                                            return response()->json([
-                                                'text' => 'No se pudo guardar la validación.'
-                                            ], 500);
-                                        }
-                                    } else {
-                                        return response()->json([
-                                            'text' => 'No se pudo procesar la validación.'
-                                        ], 500);
-                                    }
-                                } else {
-                                    return response()->json([
-                                        'text' => 'No se pudo realizar la validación.'
-                                    ], 404);
-                                }
-                            } else {
-                                return response()->json([
-                                    'text' => 'Uno o mas campos del formulario no son correctos.',
-                                    'list' => array_map(function ($item) {
-                                        return current($item);
-                                    }, $validator->errors()->toArray())
-                                ], 400);
-                            }
-                        case 2:
-                            $validator = Validator::make($request->all(), [
-                                'type' => 'required|in:CC,CE,PA',
-                                'from' => 'required|regex:/^[A-Z]{2}$/',
-                                'card' => 'required|max:16'
-                            ], [
-                                'type.in' => 'El campo no es válido.',
-                                'card.max' => 'El campo no es válido.',
-                                'type.required' => 'El campo es requerido.',
-                                'from.required' => 'El campo es requerido.',
-                                'card.required' => 'El campo es requerido.'
-                            ]);
-        
-                            if (empty($validator->fails())) {
-                                $client = new Client(['headers' => [
                                     'Content-Length' => strlen(($data = json_encode([
-                                        'country' => trim($request->get('from')),
-                                        'identification' => trim($request->get('card')),
-                                        'type' => trim($request->get('type'))
+                                        'email' => env('API_AUCO_EMAIL'),
+                                        'country' => 'CO',
+                                        'documentNumber' => trim($request->get('card'))
                                     ]))),
                                     'Content-Type' => 'application/json',
                                     'Authorization' => env('API_AUCO_PRIVATE')]]
                                 );
                                 
-                                $response = $client->request('POST', sprintf('%s/%s', env('API_AUCO_ENVIRONMENT'), 'validate/backgroundCheck'), [
+                                $response = $client->request('POST', sprintf('%s/%s', env('API_AUCO_ENVIRONMENT'), 'validate/company/representatives'), [
                                     'http_errors' => false,
                                     'body' => $data
                                 ]);
@@ -180,17 +142,17 @@ class PastController extends Controller
                                                 'data' => $data
                                             ], 200);
                                         } else {
-                                            return response()->json([
+                                            return response()->json(['body2'=>$response->getBody(),
                                                 'text' => 'No se pudo guardar la validación.'
                                             ], 500);
                                         }
                                     } else {
-                                        return response()->json([
+                                        return response()->json(['body1'=>$response->getBody(),
                                             'text' => 'No se pudo procesar la validación.'
                                         ], 500);
                                     }
                                 } else {
-                                    return response()->json([
+                                    return response()->json(['body'=>$response->getBody(),
                                         'text' => 'No se pudo realizar la validación.'
                                     ], 404);
                                 }
@@ -205,32 +167,33 @@ class PastController extends Controller
                         default:
                             $validator = Validator::make($request->all(), [
                                 'card' => 'required|max:16',
+                                'type' => 'required|in:CC,CE,NIT,PPT',
+                                'date' => 'nullable|date_format:Y-m-d'
                             ], [
+                                'type.in' => 'El campo no es válido.',
                                 'card.max' => 'El campo no es válido.',
+                                'date.date_format' => 'El campo no es válido.',
+                                'type.required' => 'El campo es requerido.',
+                                'from.required' => 'El campo es requerido.',
                                 'card.required' => 'El campo es requerido.'
                             ]);
         
                             if (empty($validator->fails())) {
                                 $client = new Client(['headers' => [
-                                'Content-Length' => strlen(($data = json_encode([
-                                        'email' => Auth::user()->mail,
-                                        'identification' => trim($request->get('card')),
-                                        'restrictiveLists' => [
-                                            'procuraduriaRecords',
-                                            'contraloriaRecords',
-                                            'judicialRecords',
-                                            'policeRecords'
-                                        ]
-                                    ]))),
+                                    'Content-Length' => strlen(($data = json_encode(array_merge([
+                                        'type' => trim($request->get('type')),
+                                        'email' => env('API_AUCO_EMAIL'),
+                                        'identification' => trim($request->get('card'))
+                                    ], ($date = trim($request->get('date'))) ? ['expeditionDate' => date('d/m/Y', strtotime($date))] : [])))),
                                     'Content-Type' => 'application/json',
                                     'Authorization' => env('API_AUCO_PRIVATE')]]
                                 );
                                 
-                                $response = $client->request('POST', sprintf('%s/%s', env('API_AUCO_ENVIRONMENT'), 'validate/backgroundCheck/co'), [
+                                $response = $client->request('POST', sprintf('%s/%s', env('API_AUCO_ENVIRONMENT'), 'validate/background'), [
                                     'http_errors' => false,
                                     'body' => $data
                                 ]);
-        
+
                                 if (($response->getStatusCode() == 200)) {
                                     if (($data = json_decode($response->getBody(), true))) {
                                         if (($item = DB::table('pasts')->insertGetId([
@@ -247,8 +210,7 @@ class PastController extends Controller
                                             return response()->json([
                                                 'item' => $item,
                                                 'hash' => $hash,
-                                                'code' => $code,
-                                                'data' => $data
+                                                'code' => $code
                                             ], 200);
                                         } else {
                                             return response()->json([
@@ -261,9 +223,9 @@ class PastController extends Controller
                                         ], 500);
                                     }
                                 } else {
-                                    return response()->json([
+                                    return response()->json(['body'=> $response->getBody()->getContents(),
                                         'text' => 'No se pudo realizar la validación.'
-                                    ], 404);
+                                    ], 500);
                                 }
                             } else {
                                 return response()->json([
@@ -346,8 +308,8 @@ class PastController extends Controller
 
                     return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
                                                                           ->take(($take ? $take : $size))
                                                                           ->select('*', DB::raw(sprintf("CONVERT_TZ(date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('date', 'desc')

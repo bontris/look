@@ -78,9 +78,10 @@ class DashController extends Controller
                                     'name' => $data['result'][0]['NAME'],
                                     'mail' => $data['result'][0]['EMAIL'],
                                     'note' => $user->firm->hand->note,
-                                    'last' => $data['result'][0]['LAST_NAME'],
-                                    'icon' => $data['result'][0]['PERSONAL_PHOTO'],
-                                    'work' => $data['result'][0]['PERSONAL_MOBILE']
+                                    'book' => $user->firm->hand->book,
+                                    'last' => isset($data['result'][0]['LAST_NAME']) ? $data['result'][0]['LAST_NAME'] : null,
+                                    'icon' => isset($data['result'][0]['PERSONAL_PHOTO']) ? $data['result'][0]['PERSONAL_PHOTO'] : null,
+                                    'work' => isset($data['result'][0]['PERSONAL_MOBILE']) ? $data['result'][0]['PERSONAL_MOBILE'] : null
                                 ];
                             }
                         }
@@ -92,7 +93,10 @@ class DashController extends Controller
                     'list' => array_reduce(DB::table('cards')
                                               ->where('hide', 0)
                                               ->where('lock', 0)
-                                              ->where('sort', (($user->type == 3) ? 1 : 2))
+                                              ->where(function ($query) use ($user) {
+                                                $query->where('sort', 0)
+                                                      ->orWhere('sort', ($user->type == 4) ? 1 : 2);
+                                              })
                                               ->where(function ($query) {
                                                 $query->where('type', 1)
                                                       ->orWhere('type', 3);

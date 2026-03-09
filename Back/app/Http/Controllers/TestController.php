@@ -34,25 +34,33 @@ class TestController extends Controller
                             'lock' => 'nullable|in:0,1',
                             'bind' => 'required|integer',
                             'code' => 'required|max:16',
+                            'area' => 'nullable|max:128',
+                            'work' => 'nullable|max:1024',
                             'list' => 'required|array|min:1',
                             'list.*.item' => 'required|integer',
                             'list.*.rate' => 'nullable|integer',
                             'list.*.data' => 'required|in:0,1,2,3',
                             'list.*.risk' => 'nullable|in:0,1,2,3',
-                            'list.*.note' => 'nullable|string|max:128',
-                            'list.*.plan' => 'nullable|string|max:128'
+                            'list.*.note' => 'nullable|string|max:1024',
+                            'list.*.plan' => 'nullable|string|max:1024',
+                            'file' => 'nullable|mimetypes:application/pdf|max:5120'
                         ], [
                             'lock.in' => 'El valor no es válido.',
                             'list.min' => 'El valor no es válid0.',
+                            'area.max' => 'El valor no es válido.',
+                            'work.max' => 'El valor no es válido.',
+                            'file.max' => 'El documento no puede pesar más de 5 Mb.',
                             'list.array' => 'El campo no es válido.',
                             'bind.integer' => 'El valor no es válido.',
                             'list.required' => 'El campo es requerido.',
                             'bind.required' => 'El campo es requerido.',
+                            'file.mimetypes' => 'El campo no es válido.',
                             'list.*.data.in' => 'La opción no es válida.',
                             'list.*.risk.in' => 'La opción no es válida.',
                             'list.*.note.string' => 'El campo no es válido.',
                             'list.*.plan.string' => 'El campo no es válido.',
                             'list.*.rate.integer' => 'El valor no es válido.',
+                            'list.*.item.integer' => 'El valor no es válido.',
                             'list.*.item.required' => 'El campo es requerido.',
                             'list.*.data.required' => 'El campo es requerido.'
                         ]);
@@ -67,90 +75,112 @@ class TestController extends Controller
                                                       ->where('bind', trim($request->get('bind', $item->bind)))
                                                       ->first())) || ($item->row == $same->row))) {
                                     if (count(($list = array_reduce($request->get('list'), function ($list, $next) use ($item) {
-                                        if (($data = DB::table('picks')
-                                                        ->where('bind', $item['row'])
-                                                        ->where('item', $next['item'])
-                                                        ->first())) {
-                                            array_push($list, [
-                                                'item' => $data->row,
-                                                'data' => [
-                                                    'data' => $next['data'] ?? $data->data,
-                                                    'risk' => $next['risk'] ?? $data->risk,
-                                                    'rate' => $next['rate'] ?? $data->rate,
-                                                    'note' => $next['note'] ?? $data->note,
-                                                    'plan' => $next['plan'] ?? $data->plan
-                                                ]
-                                            ]);
-                                        } else {
-                                            array_push($list, [
-                                                'data' => [
-                                                    'item' => $next['item'],
-                                                    'data' => $next['data'],
-                                                    'risk' => $next['risk'],
-                                                    'rate' => $next['rate'],
-                                                    'note' => $next['note'],
-                                                    'plan' => $next['plan']
-                                                ]
-                                            ]);
+                                        if ((empty(isset($next['sort'])) || intval($next['sort']))) {
+                                            if (($data = DB::table('picks')
+                                                            ->where('bind', $item['row'])
+                                                            ->where('item', $next['item'])
+                                                            ->first())) {
+                                                array_push($list, [
+                                                    'item' => $data->row,
+                                                    'data' => [
+                                                        'data' => $next['data'] ?? $data->data ?? 0,
+                                                        'risk' => $next['risk'] ?? $data->risk ?? 0,
+                                                        'rate' => $next['rate'] ?? $data->rate ?? 0,
+                                                        'note' => $next['note'] ?? $data->note ?? '',
+                                                        'plan' => $next['plan'] ?? $data->plan ?? ''
+                                                    ]
+                                                ]);
+                                            } else {
+                                                array_push($list, [
+                                                    'data' => [
+                                                        'item' => $next['item'] ?? 0,
+                                                        'data' => $next['data'] ?? 0,
+                                                        'risk' => $next['risk'] ?? 0,
+                                                        'rate' => $next['rate'] ?? 0,
+                                                        'note' => $next['note'] ?? '',
+                                                        'plan' => $next['plan'] ?? ''
+                                                    ]
+                                                ]);
+                                            }
                                         }
 
                                         return $list;
                                     }, [])))) {
                                         try {
                                             DB::beginTransaction();
-                                           
-                                            if (DB::table('tests')
-                                                  ->where('row', $item->row)
-                                                  ->update([
-                                                'mark' => date('Y-m-d H:i:s'),
-                                                'code' => trim($request->get('code', $item->code)),
-                                                'bind' => trim($request->get('bind', $item->bind)),
-                                                'lock' => intval($request->get('lock', $item->lock))
-                                            ])) {
-                                                foreach (array_reduce($item->list->toArray(), function ($data, $next) use ($list) {
-                                                    if ((function ($list, $next) {
-                                                        foreach ($list as $item) {
-                                                            if (isset($item['item'])) {
-                                                                if (($next['row'] == $item['item'])) {
-                                                                    return true;
+
+                                            if ((empty(($file = $request->file('file'))) || ($file->move(storage_path('files'), ($hash = md5(uniqid(rand(), true)))) && DB::table('files')->insertGetId([
+                                                'hash' => $hash,
+                                                'skip' => Auth::user()->id,
+                                                'bind' => Auth::user()->bind,
+                                                'made' => date('Y-m-d H:i:s'),
+                                                'size' => 0,//$request->file('file')->getSize(),
+                                                'type' => $file->getClientMimeType(),
+                                                'name' => $file->getClientOriginalName()])))) {
+                                                if (DB::table('tests')
+                                                    ->where('row', $item->row)
+                                                    ->update([
+                                                    'mark' => date('Y-m-d H:i:s'),
+                                                    'file' => isset($file) ? $hash : $item->file,
+                                                    'code' => trim($request->get('code', $item->code)),
+                                                    'area' => trim($request->get('area', $item->area)),
+                                                    'work' => trim($request->get('work', $item->work)),
+                                                    'bind' => intval($request->get('bind', $item->bind)),
+                                                    'lock' => intval($request->get('lock', $item->lock))
+                                                ])) {
+                                                    foreach (array_reduce($item->list->toArray(), function ($data, $next) use ($list) {
+                                                        if ((function ($list, $next) {
+                                                            foreach ($list as $item) {
+                                                                if (isset($item['item'])) {
+                                                                    if (($next['item'] == $item['item'])) {
+                                                                        return true;
+                                                                    }
                                                                 }
                                                             }
+
+                                                            return false;
+                                                        })($list, $next)) {
+                                                            array_push($data, $next);
                                                         }
-
-                                                        return false;
-                                                    })($list, $next)) {
-                                                        array_push($data, $next);
-                                                    }
-                                                    
-                                                    return $data;
-                                                }, []) as $drop) {
-                                                    DB::table('picks')
-                                                      ->where('row', $drop['item'])
-                                                      ->delete();
-                                                }
-
-                                                foreach ($list as $save) {
-                                                    if (isset($save['item'])) {
+                                                        
+                                                        return $data;
+                                                    }, []) as $drop) {
                                                         DB::table('picks')
-                                                          ->where('row', $save['item'])
-                                                          ->update($save['data']);
-                                                    } else {
-                                                        DB::table('picks')->insert(array_merge($save['data'], [
-                                                            'bind' => $item->row,
-                                                            'code' => hexdec(uniqid()),
-                                                            'hash' => md5(uniqid(rand(), true))
-                                                        ]));
+                                                          ->where('row', $drop['item'])
+                                                          ->delete();
                                                     }
+
+                                                    foreach ($list as $save) {
+                                                        if (isset($save['item'])) {
+                                                            DB::table('picks')
+                                                              ->where('row', $save['item'])
+                                                              ->update($save['data']);
+                                                        } else {
+                                                            DB::table('picks')->insert(array_merge($save['data'], [
+                                                                'bind' => $item->row,
+                                                                'code' => hexdec(uniqid()),
+                                                                'hash' => md5(uniqid(rand(), true))
+                                                            ]));
+                                                        }
+                                                    }
+
+                                                    if ((empty(empty($file)) && empty(empty($item->file)) && empty(@unlink(sprintf('%s/%s', storage_path('files'), $item->file))) && empty(DB::table('files')->where('hash', $item->file)->delete()))) {
+                                                        Log::error(sprintf('Unable to delete the file: %s', $item->file));
+                                                    } 
+
+                                                    DB::commit();
+
+                                                    return response()->json([
+                                                        'text' => 'El registro fue actualizado con éxito.'
+                                                    ], 200);
+                                                } else {
+                                                    return response()->json([
+                                                        'text' => 'El registro no pudo ser actualizado.'
+                                                    ], 500);
                                                 }
-
-                                                DB::commit();
-
-                                                return response()->json([
-                                                    'text' => 'El registro fue actualizado con éxito.'
-                                                ], 200);
                                             } else {
                                                 return response()->json([
-                                                    'text' => 'El registro no pudo ser actualizado.'
+                                                    'text' => 'El documento no pudo ser cargado con éxito.'
                                                 ], 500);
                                             }
                                         } catch (\Exception $exception) {
@@ -182,7 +212,7 @@ class TestController extends Controller
 				            }
 			            } else {
 			            	return response()->json([
-                                'text' => 'Uno o más campos del formulario no son correctos.',
+                                'text' => 'Uno o más campos del formulario no son correctos.','data' => $request->get('list'),
                                 'form' => array_map(function ($item) {
                                     return current($item);
                                 }, $validator->errors()->toArray())
@@ -226,24 +256,32 @@ class TestController extends Controller
     				$validator = Validator::make($request->all(), [
                         'lock' => 'nullable|in:0,1',
                         'bind' => 'required|integer',
+                        'area' => 'nullable|max:128',
+                        'work' => 'nullable|max:1024',
                         'list' => 'required|array|min:1',
                         'list.*.item' => 'required|integer',
                         'list.*.rate' => 'nullable|integer',
                         'list.*.data' => 'required|in:0,1,2,3',
                         'list.*.risk' => 'nullable|in:0,1,2,3',
-                        'list.*.note' => 'nullable|string|max:128',
-                        'list.*.plan' => 'nullable|string|max:128'
+                        'list.*.note' => 'nullable|string|max:1024',
+                        'list.*.plan' => 'nullable|string|max:1024',
+                        'file' => 'nullable|mimetypes:application/pdf|max:5120'
                     ], [
                         'lock.in' => 'El campo no es válido.',
                         'list.min' => 'El valor no es válido.',
+                        'area.max' => 'El valor no es válido.',
+                        'work.max' => 'El valor no es válido.',
+                        'file.max' => 'El documento no puede pesar más de 5 Mb.',
                         'list.array' => 'El campo no es válido.',
                         'bind.integer' => 'El valor no es válido.',
                         'list.required' => 'El campo es requerido.',
                         'bind.required' => 'El campo es requerido.',
+                        'file.mimetypes' => 'El campo no es válido.',
                         'list.*.data.in' => 'La opción no es válida.',
                         'list.*.risk.in' => 'La opción no es válida.',
                         'list.*.note.string' => 'El campo no es válido.',
                         'list.*.plan.string' => 'El campo no es válido.',
+                        'list.*.item.integer' => 'El valor no es válido.',
                         'list.*.rate.integer' => 'El valor no es válido.',
                         'list.*.item.required' => 'El campo es requerido.',
                         'list.*.data.required' => 'El campo es requerido.'
@@ -260,39 +298,57 @@ class TestController extends Controller
                                         ->first())) {
                                 try {
                                     DB::beginTransaction();
-
-                                    if (($item = DB::table('tests')->insertGetId([
-                                        'code' => $code,
-                                        'made' => date('Y-m-d H:i:s'),
-                                        'lock' => intval($request->get('lock')),
-                                        'bind' => intval($request->get('bind')),
-                                        'hash' => ($hash = md5(uniqid(rand(), true)))
-                                    ]))) {
-                                        foreach ($request->get('list') as $pick) {
-                                            DB::table('picks')->insert([
-                                                'bind' => $item,
-                                                'item' => $pick['item'],
-                                                'data' => $pick['data'],
-                                                'risk' => $pick['risk'],
-                                                'rate' => $pick['rate'],
-                                                'note' => $pick['note'],
-                                                'plan' => $pick['plan'],
-                                                'code' => hexdec(uniqid()),
-                                                'hash' => md5(uniqid(rand(), true))
-                                            ]);
-                                        }
-
-                                        DB::commit();
-
-                                        return response()->json([
-                                            'item' => $item,
-                                            'code' => $code,
+                                    
+                                    if ((empty(($file = $request->file('file'))) || ($file->move(storage_path('files'), ($hash = md5(uniqid(rand(), true)))) && DB::table('files')->insertGetId([
                                             'hash' => $hash,
-                                            'text' => 'El registro fue guardado con éxito.'
-                                        ], 200);
+                                            'skip' => Auth::user()->id,
+                                            'bind' => Auth::user()->bind,
+                                            'made' => date('Y-m-d H:i:s'),
+                                            'size' => 0,//$request->file('file')->getSize(),
+                                            'type' => $file->getClientMimeType(),
+                                            'name' => $file->getClientOriginalName()])))) {
+                                        if (($item = DB::table('tests')->insertGetId([
+                                            'code' => $code,
+                                            'made' => date('Y-m-d H:i:s'),
+                                            'file' => isset($file) ? $hash : null,
+                                            'area' => trim($request->get('area')),
+                                            'work' => trim($request->get('work')),
+                                            'lock' => intval($request->get('lock')),
+                                            'bind' => intval($request->get('bind')),
+                                            'hash' => ($hash = md5(uniqid(rand(), true)))
+                                        ]))) {
+                                            foreach ($request->get('list') as $pick) {
+                                                if ((empty(isset($pick['sort'])) || intval($pick['sort']))) {
+                                                    DB::table('picks')->insert([
+                                                        'bind' => $item,
+                                                        'item' => $pick['item'],
+                                                        'data' => $pick['data'],
+                                                        'risk' => $pick['risk'],
+                                                        'rate' => $pick['rate'],
+                                                        'note' => $pick['note'],
+                                                        'plan' => $pick['plan'],
+                                                        'code' => hexdec(uniqid()),
+                                                        'hash' => md5(uniqid(rand(), true))
+                                                    ]);
+                                                }
+                                            }
+
+                                            DB::commit();
+
+                                            return response()->json([
+                                                'item' => $item,
+                                                'code' => $code,
+                                                'hash' => $hash,
+                                                'text' => 'El registro fue guardado con éxito.'
+                                            ], 200);
+                                        } else {
+                                            return response()->json([
+                                                'text' => 'El registro no pudo ser guardado.'
+                                            ], 500);
+                                        }
                                     } else {
                                         return response()->json([
-                                            'text' => 'El registro no pudo ser guardado.'
+                                            'text' => 'El documento no pudo ser cargado con éxito.'
                                         ], 500);
                                     }
                                 } catch (\Exception $exception) {
@@ -360,8 +416,8 @@ class TestController extends Controller
                                   $join->on('tests.bind', 'firms.row');
                                });
                     
-                    if (empty(($user->type == 1))) {
-                        $query->where('firms.lead', $user->hand->row);
+                    if (in_array($user->type, [4, 5])) {
+                        $query->where('firms.row', $user->firm->row);
                     }
 
                     if (($find = trim($request->get('find')))) {
@@ -427,11 +483,11 @@ class TestController extends Controller
                         }
                     }
 
-                    return response()->json(['size' => ($high = $query->count()),
+                    return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($high / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
-                                                                          ->take(($take ? $take : $high))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
+                                                                          ->take(($take ? $take : $size))
                                                                           ->select('tests.*', 'firms.name AS firm', DB::raw(sprintf("CONVERT_TZ(tests.made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('tests.made', 'desc')
                                                                           ->get()
@@ -441,6 +497,7 @@ class TestController extends Controller
                             'hash' => $item->hash,
                             'code' => $item->code,
                             'firm' => $item->firm,
+                            'file' => $item->file,
                             'made' => $item->made
                         ]);
 

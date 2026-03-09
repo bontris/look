@@ -10,6 +10,8 @@ use Validator;
 
 use GuzzleHttp\Client;
 
+use Illuminate\Support\Str;
+
 use Illuminate\Http\Request;
 
 use GuzzleHttp\RequestOptions;
@@ -40,7 +42,7 @@ class LeadController extends Controller
     				case 'save':
     					$validator = Validator::make($request->all(), [
                             'lock' => 'nullable|in:0,1',
-                            'type' => 'required|in:1,2',
+                            'type' => 'required|in:4,5',
                             'bind' => 'required|numeric',
                             'link' => 'nullable|numeric',
                             'code' => 'nullable|max:16',
@@ -50,7 +52,8 @@ class LeadController extends Controller
                             'note' => 'nullable|max:512',
                             'work' => 'nullable|max:16',
                             'mail' => 'required|email|max:64',
-                            'icon' => 'nullable|mimetypes:image/jpeg,image/png|max:5120'
+                            'icon' => 'nullable|mimetypes:image/jpeg,image/png|max:5120',
+                            'pass' => 'nullable|regex:/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*?&])[0-9a-zA-Z@$!%*?&]{6,12}$/',
                         ], [
                             'lock.in' => 'La opción no es válida.',
                             'type.in' => 'La opción no es válida.',
@@ -62,6 +65,7 @@ class LeadController extends Controller
                             'last.max' => 'El campo no es válido.',
                             'name.max' => 'El campo no es válido.',
                             'note.max' => 'El campo no es válido.',
+                            'pass.regex' => 'La contraseña debe tener minimo 6 y maximo 12 caracteres, al menos una letra mayúscula, una letra minuzcula, un numero y un caracter especial.',
                             'mail.email' => 'El campo no es válido.',
                             'bind.numeric' => 'El campo no es válido.',
                             'link.numeric' => 'El campo no es válido.',
@@ -155,6 +159,28 @@ class LeadController extends Controller
                                                         'lock' => intval($request->get('lock', $item->lock)),
                                                         'type' => intval($request->get('type', $item->type))
                                                     ])) {
+                                                        if (($type = intval($request->get('type')))) {
+                                                            if (empty(DB::table('users')->where('link', $item->row)->update([
+                                                                'type' => $type,
+                                                                'modification' => date('Y-m-d H:i:s')
+                                                            ]))) {
+                                                                return response()->json([
+                                                                    'text' => 'No se pudo actualizar el tipo.'
+                                                                ], 500);
+                                                            }
+                                                        }
+
+                                                        if (($pass = trim($request->get('pass')))) {
+                                                            if (empty(DB::table('users')->where('link', $item->row)->update([
+                                                                'pass' => Hash::make($pass),
+                                                                'modification' => date('Y-m-d H:i:s')
+                                                            ]))) {
+                                                                return response()->json([
+                                                                    'text' => 'No se pudo actualizar la contraseña.'
+                                                                ], 500);
+                                                            }
+                                                        }
+
                                                         if ((empty(empty($icon)) && empty(empty($item->icon)) && empty(@unlink(sprintf('%s/%s', storage_path('files'), $item->icon))))) {
                                                             Log::error(sprintf('Unable to delete the file: %s', $item->icon));
                                                         } 
@@ -281,9 +307,18 @@ class LeadController extends Controller
     					if (DB::table('leads')
 			                  ->where('row', $item->row)
 			                  ->update(['hide' => 1, 'wipe' => date('Y-m-d H:i:s')])) {
-			              	return response()->json([
-                                'text' => 'El registro fue eliminado con éxito.'
-                            ], 200);
+                            if (DB::table('users')
+                                  ->where('type', 4)
+                                  ->where('link', $item->row)
+                                  ->update(['hide' => 1, 'deletion' => date('Y-m-d H:i:s')])) {
+                                return response()->json([
+                                    'text' => 'El registro fue eliminado con éxito.'
+                                ], 200);
+                            } else {
+                                return response()->json([
+                                  'text' => 'El registro no pudo ser eliminado.'
+                                ], 500);
+                            }
 			            } else {
 			              	return response()->json([
                                 'text' => 'El registro no pudo ser eliminado.'
@@ -303,7 +338,7 @@ class LeadController extends Controller
     				$validator = Validator::make($request->all(), [
                         'lock' => 'nullable|in:0,1',
                         'test' => 'nullable|in:0,1',
-                        'type' => 'required|in:1,2',
+                        'type' => 'required|in:4,5',
                         'bind' => 'required|numeric',
                         'link' => 'nullable|numeric',
                         'code' => 'nullable|max:16',
@@ -396,7 +431,7 @@ class LeadController extends Controller
                                                                             ]
                                                                         ]
                                                                     ]);
-                
+                                                                    
                                                                     if (($response->getStatusCode() == 200)) {
                                                                         if (($data = json_decode($response->getBody(), true))) {
                                                                             $response = $client->request('POST', 'https://tallera.bitrix24.es/rest/1/ffork65fduhppg1p/crm.contact.company.add.json', [
@@ -407,7 +442,7 @@ class LeadController extends Controller
                                                                                     ]
                                                                                 ]
                                                                             ]);
-    
+                                                                            
                                                                             if (($response->getStatusCode() == 200)) {
                                                                                 return $data['result'];
                                                                             }
@@ -438,9 +473,9 @@ class LeadController extends Controller
 
                                                                     if (($skip = DB::table('users')->insertGetId([
                                                                         'test' => 0,
-                                                                        'lock' => 1,
-                                                                        'type' => 3,
-                                                                        'pass' => null,
+                                                                        'lock' => 0,
+                                                                        'type' => 4,
+                                                                        'pass' => Hash::make(($pass = Str::random(8))),
                                                                         'face' => $icon,
                                                                         'tone' => $tone,
                                                                         'hash' => $hash,
@@ -459,14 +494,15 @@ class LeadController extends Controller
                                                                             'item' => $skip,
                                                                             'date' => date('Y-m-d H:i:s'),
                                                                             'hash' => ($seek = md5(uniqid(rand(), true))),
-                                                                            'pass' =>  Hash::make(($pass = mt_rand(100000, 999999)))
+                                                                            'pass' =>  Hash::make(($pass = Str::random(8)))
                                                                         ])) {
                                                                             DB::commit();
 
-                                                                            Mail::send('mail.lock', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'pass' => $pass], function ($message) use ($request) {
+                                                                            Mail::send('mail.sign', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'pass' => $pass], function ($message) use ($request) {
                                                                                 $message->to(trim($request->get('mail')), sprintf('%s %s', trim($request->get('name')), trim($request->get('last'))))
+                                                                                        ->cc(env('APP_MAIL'), env('APP_NAME'))
                                                                                         ->from(env('APP_MAIL'), env('APP_NAME'))
-                                                                                        ->subject('Activa tu cuenta');
+                                                                                        ->subject(sprintf('Bienvenido a %s', env('APP_NAME')));
                                                                             });
 
                                                                             return response()->json([
@@ -481,7 +517,7 @@ class LeadController extends Controller
                                                                             ], 200);
                                                                         } else {
                                                                             return response()->json([
-                                                                                'text' => 'El registro no pudo ser guardado correctamente.'
+                                                                                'text' => 'El registro no pudo ser guardado correctamente 3.'
                                                                             ], 500);
                                                                         }
                                                                     }
@@ -512,7 +548,7 @@ class LeadController extends Controller
                                                 } else {
                                                     return response()->json([
                                                         'text' => 'Uno o mas campos del formulario no son correctos.',
-                                                        'list' => ['firm' => 'La compañía no es válida.']
+                                                        'list' => ['bind' => 'La compañía no es válida.']
                                                     ], 400);
                                                 }
                                             } else {
@@ -634,8 +670,8 @@ class LeadController extends Controller
 
                     return response()->json(['size' => ($size = $query->count()),
                                              'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 1), ceil(($size / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? (($page - 1) * $take) : 0))
+                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
+                                             'data' => array_reduce($query->skip(($page * $take))
                                                                           ->take(($take ? $take : $size))
                                                                           ->select('leads.*', 'firms.name AS firm', DB::raw(sprintf("CONVERT_TZ(leads.made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('leads.made', 'desc')

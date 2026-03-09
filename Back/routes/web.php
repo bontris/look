@@ -1,25 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HistoryController;
-use App\Http\Controllers\ClientesController;
-use App\Http\Controllers\AdminLoginController;
-use App\Http\Controllers\AdminRegisterController;
-use App\Http\Controllers\MyWalletController;
-use App\Http\Controllers\SellController;
-use App\Http\Controllers\MarketPlaceController;
-use App\Http\Controllers\ActiveBidsController;
-use App\Http\Controllers\AllSavedController;
-use App\Http\Controllers\profileController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\FlorgotPasswordController;
-use App\Http\Controllers\VerifyController;
-use App\Http\Controllers\MyCollectionController;
-use App\Http\Controllers\MarketPlaceDetailsController;
-use App\Http\Controllers\ProductUploadController;
+
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\DashController;
 
@@ -49,6 +32,16 @@ use App\Http\Controllers\FileController;
 
 use App\Http\Controllers\TestController;
 
+use App\Http\Controllers\ChatController;
+
+use App\Http\Controllers\RingController;
+
+use App\Http\Controllers\KindController;
+
+use App\Http\Controllers\SaleController;
+
+use App\Http\Controllers\HookController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -60,58 +53,26 @@ use App\Http\Controllers\TestController;
 |
 */
 
-//Route::get('/',[DashboardController::class,'index']);
+/** BASE ROUTES */
 
-Route::get('/load-login',[AdminLoginController::class,'index']);
-Route::post('/admin-login',[AdminLoginController::class,'login']);
-
-Route::get('/load-register',[AdminRegisterController::class,'index']);
-Route::post('/register',[AdminRegisterController::class,'register']);
-
-Route::get('/history',[HistoryController::class,'index']);
-
-Route::get('/my-wallet',[MyWalletController::class,'index']);
-
-Route::get('/sell',[SellController::class,'index']);
-
-Route::get('/market-place',[MarketPlaceController::class,'index']);
-
-Route::get('/active-bids',[ActiveBidsController::class,'index']);
-
-Route::get('/all-saved',[AllSavedController::class,'index']);
-
-Route::get('/my-profile',[profileController::class,'index']);
-
-Route::get('/setting',[SettingController::class,'index']);
-
-Route::get('/notification',[NotificationController::class,'index']);
-
-Route::get('/message',[MessageController::class,'index']);
-
-Route::get('/forgot-password',[FlorgotPasswordController::class,'index']);
-Route::post('/find-password',[FlorgotPasswordController::class,'findPassword']);
-
-Route::get('/verify',[VerifyController::class,'index']);
-Route::post('/verification',[VerifyController::class,'verification']);
-
-Route::get('/my-collection',[MyCollectionController::class,'index']);
-
-Route::get('/market-place-details',[MarketPlaceDetailsController::class,'index']);
-
-Route::get('/upload-product',[ProductUploadController::class,'index']);
-
-Route::post('/change-password',[SettingController::class,'changePassword']);
 
 Route::match(['get', 'post'], '/dash/{task?}', [DashController::class, 'main'])
 	 ->middleware('auth')
       ->where('task', 'home|load|dump')
 	 ->name('dash');
 
+Route::match(['get', 'post'], '/bell', [UserController::class, 'bell'])
+	 ->middleware('auth')
+	 ->name('bell');
+
 Route::match(['get', 'post'], '/sign', [UserController::class, 'sign'])
      ->name('sign');
 
 Route::post('/ping', [UserController::class, 'ping'])
      ->name('ping');
+
+Route::post('/data', [UserController::class, 'data'])
+     ->name('data');
 
 Route::post('/exit', [UserController::class, 'exit'])
      ->name('exit');
@@ -127,6 +88,12 @@ Route::match(['get', 'post'], '/pass/{hash}/{pass}', [UserController::class, 'pa
      ->where('hash', '[\w]{32}')
      ->where('pass', '[\w]{32}')
      ->name('pass');
+
+Route::match(['get', 'post'], '/chat/{task?}/{item?}', [ChatController::class, 'main'])
+     ->middleware('auth')
+     ->where('task', 'load|pull|make|save|face|pass|mail|wait|drop|lock')
+     ->where('item', '[\w]{32}')
+     ->name('chat');
 
 Route::match(['get', 'post'], '/users/{task?}/{item?}', [UserController::class, 'main'])
      ->middleware('auth')
@@ -148,16 +115,28 @@ Route::match(['get', 'post'], '/terms/{task?}/{item?}', [TermController::class, 
 
 Route::match(['get', 'post'], '/makes/{task?}/{item?}/{type?}/{part?}', [MakeController::class, 'main'])
      ->middleware('auth')
-     ->where('task', 'find|load|pull|date|seek|bulk|make|save|icon|drop|lock')
+     ->where('task', 'find|load|pull|date|seek|bulk|make|risk|save|icon|drop|lock')
      ->where('item', '\w{32}|(\d{1,16})')
      ->where('part', '\w{32}|(\d{1,16})')
      ->where('type', 'note')
      ->name('makes');
 
+Route::match(['get', 'post'], '/kinds/{task?}/{item?}', [KindController::class, 'main'])
+     ->middleware('auth')
+     ->where('task', 'find|load|pull|make|save|drop|lock')
+     ->where('item', '\w{32}|(\d{1,16})')
+     ->name('kinds');
+
+Route::match(['get', 'post'], '/sales/{task?}/{item?}', [SaleController::class, 'main'])
+     ->middleware('auth')
+     ->where('task', 'find|load|pull|make|save|drop|lock')
+     ->where('item', '\w{32}|(\d{1,16})')
+     ->name('sales');
+
 Route::match(['get', 'post'], '/pasts/{type}/{task?}/{item?}', [PastController::class, 'main'])
      ->middleware('auth')
      ->where('type', '1|2|3')
-     ->where('task', 'load|post|drop|lock')
+     ->where('task', 'load|post|drop|lock|dump')
      ->where('item', '\w{32}|\d+')
      ->name('pasts');
 
@@ -173,6 +152,12 @@ Route::match(['get', 'post'], '/cards/{task?}/{item?}', [CardController::class, 
      ->where('task', 'load|pull|make|save|snap|drop|lock')
      ->where('item', '[\w]{32}')
      ->name('cards');
+
+Route::match(['get', 'post'], '/rings/{task?}/{item?}', [RingController::class, 'main'])
+     ->middleware('auth')
+     ->where('task', 'load|pull|make|save|drop|lock')
+     ->where('item', '[\w]{32}')
+     ->name('rings');
 
 Route::match(['get', 'post'], '/hands/{task?}/{item?}', [HandController::class, 'main'])
      ->middleware('auth')
@@ -194,27 +179,30 @@ Route::match(['get', 'post'], '/tasks/{task?}/{item?}', [TaskController::class, 
 
 Route::match(['get', 'post'], '/loads/{task?}/{item?}', [LoadController::class, 'main'])
      ->middleware('auth')
-     ->where('task', 'load|pull|make|save|face|pass|mail|wait|drop|lock')
-     ->where('item', '[\w]{32}')
+     ->where('task', 'load|pull|make|dump|face|pass|mail|wait|drop|lock')
+     ->where('item', '[0-9]+')
      ->name('loads');
 
 Route::match(['get', 'post'], '/files/{task?}/{item?}', [FileController::class, 'main'])
-     ->middleware('auth')
      ->where('task', 'load|open|pull|make|save|face|pass|mail|wait|drop|lock')
      ->where('item', '[\w\-\_]{16,64}')
      ->name('files');
 
-Route::match(['get', 'post'], '/documentos/{task?}/{item?}', [FileController::class, 'main'])
-     ->middleware('auth')
-     ->where('task', 'load|pull|make|save|face|pass|mail|wait|drop|lock')
-     ->where('item', '[\w\-\_]{16,64}')
-     ->name('files');
+Route::get('/snaps/{item}/{size?}', [FileController::class, 'snap'])
+     ->where('size', 'thumb|small')
+     ->where('item', '\w+')
+     ->name('snaps');
 
 Route::match(['get', 'post'], '/tests/{task?}/{item?}', [TestController::class, 'main'])
      ->middleware('auth')
      ->where('task', 'load|pull|make|save|face|pass|mail|wait|drop|lock')
      ->where('item', '[\w\-\_]{16,64}')
      ->name('tests');
+
+Route::post('/hook/{firm}/{type}', 'HookController@main')
+     ->where('firm', '\w+')
+     ->where('type', '\w+')
+     ->name('hook');
 
 Route::match(['get', 'post'], '/diagnostico', [TestController::class, 'form'])
      ->middleware('auth')
