@@ -492,9 +492,9 @@ class LeadController extends Controller
                                                                         if (DB::table('codes')->insert([
                                                                             'type' => 1,
                                                                             'item' => $skip,
+                                                                            'pass' =>  $pass,
                                                                             'date' => date('Y-m-d H:i:s'),
-                                                                            'hash' => ($seek = md5(uniqid(rand(), true))),
-                                                                            'pass' =>  Hash::make(($pass = Str::random(8)))
+                                                                            'hash' => ($seek = md5(uniqid(rand(), true)))
                                                                         ])) {
                                                                             DB::commit();
 

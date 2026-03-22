@@ -414,18 +414,18 @@ class HandController extends Controller
                                                                         'work' => trim($request->get('work')),
                                                                         'note' => trim($request->get('note')),
                                                                         'type' => intval($request->get('type')),
-                                                                        'pass' => ($pass = trim($request->get('pass'))) ? Hash::make($pass) : null,
+                                                                        'pass' => Hash::make(($pass = trim($request->get('pass', Str::random(8))))),
                                                                         'creation' => date('Y-m-d H:i:s')
                                                                     ]))) {
                                                                         if ((empty(empty(($pass))) || DB::table('codes')->insert([
                                                                             'type' => 1,
                                                                             'item' => $skip,
+                                                                            'pass' =>  $pass,
                                                                             'date' => date('Y-m-d H:i:s'),
-                                                                            'hash' => ($seek = md5(uniqid(rand(), true))),
-                                                                            'pass' =>  Hash::make(($lock = Str::random(6)))
+                                                                            'hash' => ($seek = md5(uniqid(rand(), true)))
                                                                         ]))) {
                                                                             if (empty($pass)) {
-                                                                                Mail::send('mail.sign', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'lock' => $lock], function ($message) use ($request) {
+                                                                                Mail::send('mail.sign', ['mail' => trim($request->get('mail')), 'name' => trim($request->get('name')), 'last' => trim($request->get('last')), 'seek' => $seek, 'pass' => $pass], function ($message) use ($request) {
                                                                                     $message->to(trim($request->get('mail')), sprintf('%s %s', trim($request->get('name')), trim($request->get('last'))))
                                                                                             ->cc(env('APP_MAIL'), env('APP_NAME'))
                                                                                             ->from(env('APP_MAIL'), env('APP_NAME'))
