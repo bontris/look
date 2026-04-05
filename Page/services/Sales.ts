@@ -8,7 +8,9 @@ import type {Hash} from "../types/Hash";
 
 export default {
     load (take: Null<number>, page: Null<number>, find: Null<string>, pipe: Null<string>, load: Null<string>, sort: Null<Hash<boolean>>, back: (done: boolean, data: any) => void) {
-        axios.post(`${BACK}/sales/load`, {
+        axios.post(`${BACK}/sales/load?page=${page ?? 0}&find=${find ?? ''}&take=${take ?? 16}`, {
+            pipe: pipe,
+            load: load,
             sort: Object.keys((sort ?? {})).map((name) => ({
                 name: name,
                 down: sort?.[name]

@@ -12,6 +12,8 @@ use GuzzleHttp\Client;
 
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Log;
+
 use GuzzleHttp\RequestOptions;
 
 use Illuminate\Support\Facades\DB;
@@ -189,6 +191,54 @@ class TaskController extends Controller
             }
         } else {
             switch (strtolower($task)) {
+                case 'load':
+                    $query = DB::table('tasks')
+                               ->where('tasks.hide', 0)
+                               ->leftJoin('firms', function ($join) {
+                                    $join->on('tasks.bind', '=', 'firms.link')
+                                         ->where('firms.hide', '=', 0)
+                                         ->where('firms.core', '=', 0);
+                               });
+
+                    if (Auth::check() && Auth::user()->type != 1) {
+                        $query->where('tasks.bind', Auth::user()->firm->link);
+                    }
+
+                    if (($find = trim($request->get('find')))) {
+                        $query->where(function ($query) use ($find) {
+                            $query->where('tasks.name', 'like', sprintf('%%%s%%', $find))
+                                  ->orWhere('firms.name', 'like', sprintf('%%%s%%', $find));
+                        });
+                    }
+
+                    $size = $query->count();
+                    $take = min(max(intval($request->get('take')), 0), 64);
+                    $page = $take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0;
+
+                    return response()->json([
+                        'size' => $size,
+                        'take' => $take,
+                        'page' => $page,
+                        'list' => array_reduce($query->skip($take ? ($page * $take) : 0)
+                                                     ->take($take ? $take : $size)
+                                                     ->select('tasks.*', DB::raw('firms.name AS firm'), DB::raw(sprintf("CONVERT_TZ(tasks.made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
+                                                     ->orderBy('tasks.made', 'desc')
+                                                     ->get()
+                                                     ->toArray(), function ($list, $item) {
+                            array_push($list, [
+                                'item' => intval($item->row),
+                                'hash' => $item->hash,
+                                'name' => $item->name,
+                                'head' => intval($item->head),
+                                'done' => intval($item->done),
+                                'time' => intval($item->time),
+                                'firm' => $item->firm,
+                                'made' => $item->made
+                            ]);
+
+                            return $list;
+                        }, [])
+                    ]);
                 case 'post':
                     $validator = Validator::make($request->all(), [
                         'name' => 'required|max:64',
@@ -221,6 +271,7 @@ class TaskController extends Controller
                                         'CONTACT_ID' => $user->lead->link,
                                         'CATEGORY_ID' => '15',
                                         'COMMENTS' => trim($request->get('note')),
+                                        'UF_CRM_1642540414116' => trim($request->get('name')),
                                         'SOURCE_ID' => 'MAIL',
                                         'ORIGIN_ID' => '2'
                                     ]
@@ -302,6 +353,8 @@ class TaskController extends Controller
                                     ], 500);
                                 }
                             } else {
+                                Log::error(sprintf('Bitrix24 crm.deal.add failed: status=%d, body=%s', $response->getStatusCode(), $response->getBody()));
+
                                 return response()->json([
                                     'text' => 'El servicio no pudo ser creado con éxito.'
                                 ], 400);

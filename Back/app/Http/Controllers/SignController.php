@@ -153,6 +153,10 @@ class SignController extends Controller
                                             ]);
                                         }
 
+                                        DB::table('firms')
+                                            ->where('row', Auth::user()->firm->row)
+                                            ->decrement('bank');
+
                                         return response()->json([
                                             'code' => $data['document'],'cell' => boolval($request->get('cell'))
                                         ], 200);
@@ -177,10 +181,14 @@ class SignController extends Controller
                     }
     			case 'load':
     				$query = DB::table('signs')
-                               ->where('hide', 0)
-                               ->where('type', $type)
-                               ->where('bind', Auth::user()->firm->row);
-                    
+                               ->where('signs.hide', 0)
+                               ->where('signs.type', $type)
+                               ->leftJoin('firms', 'signs.bind', '=', 'firms.row');
+
+                    if (Auth::check() && Auth::user()->type != 1) {
+                        $query->where('signs.bind', Auth::user()->firm->row);
+                    }
+
                     if (($find = trim($request->get('find')))) {
                         foreach (array_slice(explode(',', $find), 0, 20) as $part) {
                             if (($part = trim($part))) {
@@ -239,23 +247,55 @@ class SignController extends Controller
                             }
                         } else {
                             $query->where(function ($query) use ($find) {
-                                $query->where('code', 'like', sprintf('%%%s%%', $find))
-                                      ->orWhere('mail', 'like', sprintf('%%%s%%', $find))
-                                      ->orWhere('name', 'like', sprintf('%%%s%%', $find))
-                                      ->orWhere('hint', 'like', sprintf('%%%s%%', $find));
+                                $query->where('signs.code', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('signs.mail', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('signs.name', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('signs.hint', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('firms.name', 'like', sprintf('%%%s%%', $find));
                             });
                         }
                     }
 
-                    return response()->json(['size' => ($size = $query->count()),
-                                             'take' => ($take = min(max(intval($request->get('take')), 0), 64)),
-                                             'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
-                                             'data' => array_reduce($query->skip(($take ? ($page * $take) : 0))
-                                                                          ->take(($take ? $take : $size))
-                                                                          ->select('*', DB::raw(sprintf("CONVERT_TZ(date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
-                                                                          ->orderBy('date', 'desc')
-                                                                          ->get()
-                                                                          ->toArray(), function ($list, $item) {
+                    $size = $query->count();
+                    $take = min(max(intval($request->get('take')), 0), 64);
+                    $page = $take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0;
+
+                    $rows = $query->skip($take ? ($page * $take) : 0)
+                                  ->take($take ? $take : $size)
+                                  ->select('signs.*', DB::raw('firms.name AS firm'), DB::raw(sprintf("CONVERT_TZ(signs.date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
+                                  ->orderBy('date', 'desc')
+                                  ->get()
+                                  ->toArray();
+
+                    $status = [];
+
+                    try {
+                        $codes = array_unique(array_column($rows, 'code'));
+
+                        $client = new Client(['headers' => [
+                            'Authorization' => env('API_AUCO_PUBLIC')]]
+                        );
+
+                        foreach ($codes as $code) {
+                            $response = $client->request('GET', sprintf('%s/%s?code=%s', env('API_AUCO_ENVIRONMENT'), 'document', trim($code)), [
+                                'http_errors' => false
+                            ]);
+
+                            if (($response->getStatusCode() == 200)) {
+                                if (($data = json_decode($response->getBody(), true))) {
+                                    $status[$code] = [
+                                        'done' => strtoupper(trim($data['status'])) === 'FINISH',
+                                        'link' => isset($data['url']) ? $data['url'] : null
+                                    ];
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {}
+
+                    return response()->json(['size' => $size,
+                                             'take' => $take,
+                                             'page' => $page,
+                                             'data' => array_reduce($rows, function ($list, $item) use ($status) {
                         array_push($list, [
                             'lock' => intval($item->lock),
                             'item' => intval($item->row),
@@ -266,7 +306,10 @@ class SignController extends Controller
                             'name' => $item->name,
                             'mail' => $item->mail,
                             'cell' => $item->cell,
-                            'date' => $item->date
+                            'firm' => $item->firm,
+                            'date' => $item->date,
+                            'done' => isset($status[$item->code]) ? $status[$item->code]['done'] : null,
+                            'link' => isset($status[$item->code]) ? $status[$item->code]['link'] : null
                         ]);
 
                         return $list;

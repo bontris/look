@@ -395,6 +395,12 @@ export namespace Pasts {
                                 }
                             ]}
                             data={[
+                                ...([1, 2, 3].includes(session.type) ? [{
+                                    item: 'firm',
+                                    name: 'Empresa',
+                                    show: true,
+                                    sort: true
+                                }] : []),
                                 {
                                     item: 'card',
                                     name: 'Número',

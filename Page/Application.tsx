@@ -60,6 +60,8 @@ import {Kinds} from "./pages/Kinds";
 
 import {Sales} from "./pages/Sales";
 
+import {Banks} from "./pages/Banks";
+
 export const Application = () => {
     const {ping} = useSession();
 
@@ -269,6 +271,15 @@ export const Application = () => {
                                 </Lock>
                             }
                             path="edit/:item" />
+                    </Route>
+                    <Route path="/tokens">
+                        <Route
+                            element={
+                                <Lock name="Banks.List">
+                                    <Banks.List />
+                                </Lock>
+                            }
+                            index />
                     </Route>
                     <Route path="/ventas">
                         <Route

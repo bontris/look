@@ -48,6 +48,7 @@ import {
     ListItemAvatar,
     ListItemButton,
     InputAdornment,
+    Chip,
     CircularProgress
 } from "@mui/material";
 
@@ -71,6 +72,8 @@ import {Data} from "./../components/Data";
 
 import {Form} from "./../components/Form";
 
+import {useSession} from "./../hooks/Session";
+
 import Store from "./../services/Signs";
 
 export namespace Signs {
@@ -82,6 +85,8 @@ export namespace Signs {
         } = useApplication();
 
         const {type} = useParams();
+
+        const {session} = useSession();
 
         const navigate = useNavigate();
 
@@ -206,9 +211,47 @@ export namespace Signs {
                                             Detalles
                                         </Button>
                                     )
+                                },
+                                {
+                                    icon: ['M14 3v4a1 1 0 0 0 1 1h4M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2zM12 17v-6M9.5 14.5L12 17l2.5-2.5'],
+                                    hint: 'Documento',
+                                    name: 'Link',
+                                    view: (item: any, lock: boolean) => (
+                                        <Button
+                                            sx={{padding: '2px 6px 2px 16px'}}
+                                            color="primary"
+                                            variant="outlined"
+                                            disabled={!item.link}
+                                            startIcon={(
+                                                <SvgIcon sx={{width: '24px', height: '24px'}}>
+                                                    <g
+                                                        strokeLinejoin="round"
+                                                        strokeLinecap="round"
+                                                        strokeWidth="2"
+                                                        stroke="currentColor"
+                                                        fill="none">
+                                                        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+                                                        <path d="M12 17v-6" />
+                                                        <path d="M9.5 14.5L12 17l2.5-2.5" />
+                                                    </g>
+                                                </SvgIcon>
+                                            )}
+                                            onClick={() => {
+                                                window.open(item.link, '_blank');
+                                            }}>
+                                            Documento
+                                        </Button>
+                                    )
                                 }
                             ]}
                             data={[
+                                ...([1, 2, 3].includes(session.type) ? [{
+                                    item: 'firm',
+                                    name: 'Empresa',
+                                    show: true,
+                                    sort: true
+                                }] : []),
                                 {
                                     item: 'hint',
                                     name: 'Asunto',
@@ -226,6 +269,17 @@ export namespace Signs {
                                     name: 'Correo',
                                     show: true,
                                     sort: true
+                                },
+                                {
+                                    item: 'done',
+                                    name: 'Estado',
+                                    show: true,
+                                    size: 120,
+                                    cast: (item: any) => item.done === true
+                                        ? <Chip label="Firmado" size="small" sx={{ backgroundColor: '#4CAF50', color: '#fff', fontWeight: 500 }} />
+                                        : item.done === false
+                                        ? <Chip label="Pendiente" size="small" sx={{ backgroundColor: '#F44336', color: '#fff', fontWeight: 500 }} />
+                                        : <Chip label="..." size="small" variant="outlined" />
                                 },
                                 {
                                     item: 'date',

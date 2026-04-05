@@ -1,10 +1,10 @@
-//export const HOST = 'http://localhost:8080';
+export const HOST = 'http://localhost:8080';
 
-//export const BACK = 'http://shop.test';
+export const BACK = 'http://shop.test';
 
-export const HOST = 'https://app.tallera.co';
+//export const HOST = 'https://app.tallera.co';
 
-export const BACK = 'https://shop.bontris.com';
+//export const BACK = 'https://shop.bontris.com';
 
 export const NAME = 'Taller A';
 
@@ -144,7 +144,7 @@ export const MENU = [
                 icon: ['M3 19q5-3 5-6c0-3-1-3-2-3s-2.032 1.085-2 3c.034 2.048 1.658 2.877 2.5 4C8 19 9 19.5 10 18q1-1.5 1.5-2.5q1.5 3.5 4 3.5H18m2-2V5c0-1.121-.879-2-2-2s-2 .879-2 2v12l2 2zM16 7h4']
             },
             {
-                type: 4,
+                type: [1, 4],
                 name: 'Documento',
                 path: '/firmas/documentos',
                 text: 'Listado de documentos firmados',
@@ -158,7 +158,7 @@ export const MENU = [
         icon: ['M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21A12 12 0 0 1 3.5 6A12 12 0 0 0 12 3', 'M11 11a1 1 0 1 0 2 0a1 1 0 1 0-2 0m1 1v2.5'],
         list: [
             {
-                type: 4,
+                type: [1, 4],
                 name: 'Antecedentes',
                 path: '/validaciones/antecedentes',
                 text: 'Antecedentes judiciales',
@@ -206,6 +206,13 @@ export const MENU = [
                 path: '/empresas',
                 text: 'Empresas',
                 icon: ['M3 21h18M9 8h1m-1 4h1m-1 4h1m4-8h1m-1 4h1m-1 4h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16']
+            },
+            {
+                type: 1,
+                name: 'Banks',
+                path: '/tokens',
+                text: 'Tokens',
+                icon: ['M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0c1.172-.879 1.172-2.303 0-3.182c-1.171-.879-3.07-.879-4.242 0L12 14.5']
             }
         ]
     }

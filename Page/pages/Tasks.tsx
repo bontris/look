@@ -91,7 +91,7 @@ export namespace Tasks {
             firm: null,
             hash: null,
             dash: '',
-            take: 0,
+            take: 16,
             page: 0,
             size: 0,
             done: 0,
@@ -254,6 +254,12 @@ export namespace Tasks {
                                 }
                             ]}
                             data={[
+                                ...([1, 2, 3].includes(session.type) ? [{
+                                    item: 'firm',
+                                    name: 'Empresa',
+                                    show: true,
+                                    sort: true
+                                }] : []),
                                 {
                                     item: 'item',
                                     name: 'Id',
@@ -317,7 +323,8 @@ export namespace Tasks {
                                 note: 'No available resources found.'
                             }}
                             take={{
-                                pick: data.take
+                                pick: data.take ?? 16,
+                                list: [16, 32, 64]
                             }}
                             wait={data.wait}
                             list={data.list}
@@ -669,7 +676,8 @@ export namespace Tasks {
                                 note: 'No available resources found.'
                             }}
                             take={{
-                                pick: data.take
+                                pick: data.take ?? 16,
+                                list: [16, 32, 64]
                             }}
                             wait={data.wait}
                             list={data.list}

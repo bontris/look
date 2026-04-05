@@ -135,6 +135,10 @@ class PastController extends Controller
                                             'bind' => Auth::user()->firm->row,
                                             'hash' => ($hash = md5(uniqid(rand(), true)))
                                         ]))) {
+                                            DB::table('firms')
+                                                ->where('row', Auth::user()->firm->row)
+                                                ->decrement('bank');
+
                                             return response()->json([
                                                 'item' => $item,
                                                 'hash' => $hash,
@@ -207,6 +211,10 @@ class PastController extends Controller
                                             'bind' => Auth::user()->firm->row,
                                             'hash' => ($hash = md5(uniqid(rand(), true)))
                                         ]))) {
+                                            DB::table('firms')
+                                                ->where('row', Auth::user()->firm->row)
+                                                ->decrement('bank');
+
                                             return response()->json([
                                                 'item' => $item,
                                                 'hash' => $hash,
@@ -238,9 +246,13 @@ class PastController extends Controller
                     }
     			case 'load':
     				$query = DB::table('pasts')
-                               ->where('hide', 0)
-                               ->where('bind', Auth::user()->firm->row)
-                               ->where('type', $type);
+                               ->where('pasts.hide', 0)
+                               ->where('pasts.type', $type)
+                               ->leftJoin('firms', 'pasts.bind', '=', 'firms.row');
+
+                    if (Auth::check() && Auth::user()->type != 1) {
+                        $query->where('pasts.bind', Auth::user()->firm->row);
+                    }
                     
                     if (($find = trim($request->get('find')))) {
                         foreach (array_slice(explode(',', $find), 0, 20) as $part) {
@@ -300,8 +312,9 @@ class PastController extends Controller
                             }
                         } else {
                             $query->where(function ($query) use ($find) {
-                                $query->where('code', 'like', sprintf('%%%s%%', $find))
-                                      ->orWhere('card', 'like', sprintf('%%%s%%', $find));
+                                $query->where('pasts.code', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('pasts.card', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('firms.name', 'like', sprintf('%%%s%%', $find));
                             });
                         }
                     }
@@ -311,7 +324,7 @@ class PastController extends Controller
                                              'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
                                              'data' => array_reduce($query->skip(($page * $take))
                                                                           ->take(($take ? $take : $size))
-                                                                          ->select('*', DB::raw(sprintf("CONVERT_TZ(date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
+                                                                          ->select('pasts.*', DB::raw('firms.name AS firm'), DB::raw(sprintf("CONVERT_TZ(pasts.date, '%s', '%s') AS `date`", date_default_timezone_get(), env('APP_TIME', '-05:00'))))
                                                                           ->orderBy('date', 'desc')
                                                                           ->get()
                                                                           ->toArray(), function ($list, $item) {
@@ -322,6 +335,7 @@ class PastController extends Controller
                             'hash' => $item->hash,
                             'code' => $item->code,
                             'card' => $item->card,
+                            'firm' => $item->firm,
                             'date' => $item->date
                         ]);
 

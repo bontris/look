@@ -316,6 +316,26 @@ export namespace Sales {
                                 cast: (item: any) => (`COP ${cost.format((item.cost ?? 0))}`)
                             },
                             {
+                                item: 'push',
+                                edge: 'center',
+                                name: 'Acción',
+                                show: true,
+                                sort: true,
+                                size: 120,
+                                pick: [
+                                    {
+                                        item: 1,
+                                        tint: '4CAF50',
+                                        text: 'Agregar'
+                                    },
+                                    {
+                                        item: 0,
+                                        tint: 'FF9800',
+                                        text: 'Ignorar'
+                                    }
+                                ]
+                            },
+                            {
                                 item: 'date',
                                 name: 'Fecha',
                                 edge: 'right',

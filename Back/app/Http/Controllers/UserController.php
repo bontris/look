@@ -726,29 +726,33 @@ class UserController extends Controller
                 }
             } while (($done && isset($data['next']) && ($next = intval($data['next']))));
 
-            $client = new \Google\Client();
+            try {
+                $client = new \Google\Client();
 
-            $client->setClientId(env('API_GOOGLE_CLIENT'));
+                $client->setClientId(env('API_GOOGLE_CLIENT'));
 
-            $client->setClientSecret(env('API_GOOGLE_SECRET'));
+                $client->setClientSecret(env('API_GOOGLE_SECRET'));
 
-            $client->refreshToken(env('API_GOOGLE_TOKEN'));
+                $client->refreshToken(env('API_GOOGLE_TOKEN'));
 
-            $client->addScope(\Google\Service\Drive::DRIVE_FILE);
+                $client->addScope(\Google\Service\Drive::DRIVE_FILE);
 
-            $drive = new \Google\Service\Drive($client);
+                $drive = new \Google\Service\Drive($client);
 
-            $data = $drive->files->listFiles(['q' => sprintf('\'%s\' in parents and trashed = false and mimeType = \'application/vnd.google-apps.folder\'', env('API_GOOGLE_FOLDER'))]);
+                $data = $drive->files->listFiles(['q' => sprintf('\'%s\' in parents and trashed = false and mimeType = \'application/vnd.google-apps.folder\'', env('API_GOOGLE_FOLDER'))]);
 
-            if (isset($data)) {
-                $disk = array_reduce($data->files, function ($list, $item) {
-                    array_push($list, [
-                        'item' => $item->id,
-                        'name' => $item->name
-                    ]);
+                if (isset($data)) {
+                    $disk = array_reduce($data->files, function ($list, $item) {
+                        array_push($list, [
+                            'item' => $item->id,
+                            'name' => $item->name
+                        ]);
 
-                    return $list;
-                }, []);
+                        return $list;
+                    }, []);
+                }
+            } catch (\Exception $e) {
+                Log::error(sprintf('Google Drive error: %s', $e->getMessage()));
             }
 
             return response()->json([

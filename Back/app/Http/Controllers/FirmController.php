@@ -869,7 +869,7 @@ class FirmController extends Controller
                                                  'page' => ($page = ($take ? min(max(intval($request->get('page')), 0), ceil(($size / $take))) : 0)),
                                                  'data' => array_reduce($query->skip(($page * $take))
                                                                                ->take(($take ? $take : $size))
-                                                                               ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))), DB::raw(sprintf("(SELECT SUM(`times`.`load`) FROM `times` LEFT JOIN `tasks` ON `times`.`bind` = `tasks`.`row` WHERE `tasks`.`bind` = `firms`.`link` AND (DATE_FORMAT(`times`.`made`, '%%Y-%%m') = '%s')) AS `load`", date('Y-m'))))
+                                                                               ->select('*', DB::raw(sprintf("CONVERT_TZ(made, '%s', '%s') AS `made`", date_default_timezone_get(), env('APP_TIME', '-05:00'))), DB::raw(sprintf("(SELECT SUM(`times`.`load`) FROM `times` LEFT JOIN `tasks` ON `times`.`bind` = `tasks`.`row` WHERE `tasks`.`bind` = `firms`.`link` AND (DATE_FORMAT(`times`.`made`, '%%Y-%%m') = '%s')) AS `load`", date('Y-m'))), DB::raw("(SELECT CASE WHEN (SELECT COUNT(*) FROM `sales` WHERE `sales`.`bind` = `firms`.`row` AND `sales`.`push` = 1 AND `sales`.`hide` = 0) = 0 THEN NULL ELSE COALESCE(`firms`.`time`, 0) * 3600 - COALESCE((SELECT SUM(`times`.`load`) FROM `times` LEFT JOIN `tasks` ON `times`.`bind` = `tasks`.`row` WHERE `tasks`.`bind` = `firms`.`link` AND `times`.`made` >= (SELECT DATE_FORMAT(MIN(`sales`.`date`), '%Y-%m-01') FROM `sales` WHERE `sales`.`bind` = `firms`.`row` AND `sales`.`push` = 1 AND `sales`.`hide` = 0)), 0) END) AS `left`"))
                                                                                ->orderBy('made', 'desc')
                                                                                ->get()
                                                                                ->toArray(), function ($list, $item) {
@@ -880,6 +880,8 @@ class FirmController extends Controller
                                 'plan' => intval($item->plan),
                                 'link' => intval($item->link),
                                 'load' => intval($item->load),
+                                'time' => floatval($item->time),
+                                'left' => floatval($item->left),
                                 'item' => intval($item->row),
                                 'hash' => $item->hash,
                                 'code' => $item->code,

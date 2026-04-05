@@ -309,7 +309,8 @@ class SaleController extends Controller
                             }
                         } else {
                             $query->where(function ($query) use ($find) {
-                                $query->where('sales.code', 'like', sprintf('%%%s%%', $find));
+                                $query->where('sales.code', 'like', sprintf('%%%s%%', $find))
+                                      ->orWhere('firms.name', 'like', sprintf('%%%s%%', $find));
                             });
                         }
                     }
@@ -329,6 +330,7 @@ class SaleController extends Controller
                             'time' => intval($item->time),
                             'lock' => intval($item->lock),
                             'paid' => intval($item->paid),
+                            'push' => intval($item->push ?? 0),
                             'item' => intval($item->id),
                             'hash' => $item->hash,
                             'code' => $item->code,

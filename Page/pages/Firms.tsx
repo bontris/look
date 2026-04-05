@@ -356,13 +356,22 @@ export namespace Firms {
                                 cast: (item: any) => (moment.utc((item.load * 1000)).format('HH:mm'))
                             },
                             {
+                                item: 'left',
+                                name: 'Bolsa de horas',
+                                edge: 'center',
+                                show: true,
+                                sort: true,
+                                size: 180,
+                                cast: (item: any) => (item.left != null ? moment.utc((Math.abs(item.left) * 1000)).format('HH:mm') : '—')
+                            },
+                            {
                                 item: 'made',
                                 name: 'Creación',
                                 edge: 'right',
                                 show: true,
                                 sort: true,
                                 size: 180,
-                                cast: (item: any) => (moment(item.createdAt).format('MM/DD/YY LT'))
+                                cast: (item: any) => (moment(item.made).format('MM/DD/YY LT'))
                             }
                         ]}
                         take={{
@@ -522,10 +531,10 @@ export namespace Firms {
                         type: 'text',
                         size: 'half',
                         name: 'left',
-                        text: 'Horas acumuladas',
-                        hint: 'Número de horas',
-                        bind: 'El campo es requerido.',
-                        hide: (form: any) => (((form.plan == 1) == false))
+                        text: 'Bolsa de horas',
+                        hint: 'Horas disponibles',
+                        lock: true,
+                        hide: (form: any) => ((((form.plan == 1) || (form.plan == 2)) == false))
                     },
                     {
                         type: 'list',
@@ -780,10 +789,10 @@ export namespace Firms {
                         type: 'text',
                         size: 'half',
                         name: 'left',
-                        text: 'Horas acumuladas',
-                        hint: 'Número de horas',
-                        bind: 'El campo es requerido.',
-                        hide: (form: any) => (((form.plan == 1) == false))
+                        text: 'Bolsa de horas',
+                        hint: 'Horas disponibles',
+                        lock: true,
+                        hide: (form: any) => ((((form.plan == 1) || (form.plan == 2)) == false))
                     },
                     {
                         type: 'list',
